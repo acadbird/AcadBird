@@ -247,17 +247,9 @@
       // --------------------
       // 1. Firebase config
       // --------------------
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.firebasestorage.app",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
       // Add this after your Firebase initialization
-      emailjs.init("Bf08qF9nwMnYPdI7s"); // Replace with your EmailJS public key
+      emailjs.init("IEZT5aMKOxtRhUe5E"); // Replace with your EmailJS public key
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);
@@ -1368,8 +1360,8 @@ ${fileHtml}
 
           try {
             const response = await emailjs.send(
-              "service_yq2mtbi", // Replace with your EmailJS service ID
-              "template_prmhlmw", // Replace with your EmailJS template ID
+              "service_7lyl7zq", // Replace with your EmailJS service ID
+              "template_4l22exb", // Replace with your EmailJS template ID
               templateParams,
             );
             console.log("✅ Email sent successfully:", response);

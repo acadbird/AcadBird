@@ -190,18 +190,10 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-    <script>
+    <script type="module">
       // 1. YOUR FIREBASE CONFIGURATION
       // **IMPORTANT: Replace the placeholder values with your actual Firebase project configuration.**
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.firebasestorage.app",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
       // 2. Initialize Firebase App and Services
       firebase.initializeApp(firebaseConfig);

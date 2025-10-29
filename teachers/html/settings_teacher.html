@@ -10,22 +10,38 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="../style/settings_teacher.css" />
 
-    <script>
-      // ⚠️ IMPORTANT: REPLACE THIS ENTIRE OBJECT with your actual Firebase project config ⚠️
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.appspot.com",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+    <script type="module">
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
-      // Initialize Firebase App and services
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
+      // Import modular Firebase SDK
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import {
+        getFirestore,
+        doc,
+        getDoc,
+        updateDoc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+      // Initialize Firebase with modular syntax
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // Make them globally available for the regular script
+      window.auth = auth;
+      window.db = db;
+      window.firebaseModules = {
+        doc,
+        getDoc,
+        updateDoc,
+        serverTimestamp,
+        onAuthStateChanged,
+      };
     </script>
 
     <link

@@ -105,15 +105,7 @@
         getDoc,
       } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.firebasestorage.app",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
       const app = initializeApp(firebaseConfig);
       const auth = getAuth(app);

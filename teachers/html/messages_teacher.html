@@ -561,18 +561,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
-    <script>
+    <script type="module">
       // Firebase Configuration
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.appspot.com",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
-
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
       // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const db = firebase.firestore();
@@ -619,25 +610,52 @@
         }
       }
 
-      // Get teacher's classroom
+      // Get teacher's classroom - UPDATED VERSION
       async function getTeacherClassroom() {
         try {
-          console.log("🔍 Getting teacher's classroom...");
+          console.log("🔍 Getting teacher's classrooms...");
           const snapshot = await db
             .collection("classrooms")
             .where("teacherId", "==", currentTeacher.uid)
-            .limit(1)
             .get();
 
           if (snapshot.empty) {
-            console.error("❌ No classroom found for teacher");
+            console.error("❌ No classrooms found for teacher");
             showErrorMessage("No classroom assigned to you yet.");
             return;
           }
 
-          const classroomDoc = snapshot.docs[0];
-          currentClassroomId = classroomDoc.id;
-          console.log("🏫 Classroom found:", currentClassroomId);
+          // Get all classrooms and find the active one
+          const classrooms = [];
+          snapshot.forEach((doc) => {
+            classrooms.push({
+              id: doc.id,
+              ...doc.data(),
+            });
+          });
+
+          console.log(
+            "🏫 All classrooms found:",
+            classrooms.map((c) => c.id),
+          );
+
+          // Try to find the specific classroom ID you mentioned
+          const targetClassroomId = "xilO0rsjTQNz1iyh6Nmh";
+          const targetClassroom = classrooms.find(
+            (c) => c.id === targetClassroomId,
+          );
+
+          if (targetClassroom) {
+            currentClassroomId = targetClassroomId;
+            console.log("🎯 Using target classroom:", currentClassroomId);
+          } else {
+            // Fallback to first classroom
+            currentClassroomId = classrooms[0].id;
+            console.log(
+              "📝 Using first classroom as fallback:",
+              currentClassroomId,
+            );
+          }
         } catch (error) {
           console.error("❌ Error getting teacher classroom:", error);
           throw error;

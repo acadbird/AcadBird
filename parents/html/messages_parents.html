@@ -164,15 +164,7 @@
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.appspot.com",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
       const app = initializeApp(firebaseConfig);
       const db = getFirestore(app);
@@ -189,13 +181,16 @@
       }
 
       // Chat Service - Updated to match your database structure
+
+      // Chat Service - Updated to fetch only current student's classroom participants
       const ChatService = {
         currentUser: null,
         studentIds: [],
         classroomIds: [],
+        currentClassroomId: null, // Track the current classroom ID
         unsubscribeListeners: [],
         currentChatId: null,
-        unreadCounts: new Map(), // Track unread counts per chat
+        unreadCounts: new Map(),
 
         async init() {
           return new Promise((resolve) => {
@@ -204,6 +199,7 @@
                 this.currentUser = user;
                 await this.loadStudentIds();
                 await this.loadClassroomIds();
+                await this.determineCurrentClassroom(); // NEW: Determine current classroom
                 await this.loadChatList();
                 await this.setupChatListeners();
                 resolve();
@@ -216,23 +212,26 @@
 
         async loadStudentIds() {
           try {
-            const studentsQuery = query(
-              collection(db, "students"),
-              where("parentId", "==", this.currentUser.uid),
-            );
-
-            const querySnapshot = await getDocs(studentsQuery);
-            this.studentIds = querySnapshot.docs.map((doc) => doc.id);
-            console.log("Loaded student IDs:", this.studentIds);
+            const currentStudentId = await this.getCurrentStudentId();
+            if (currentStudentId) {
+              this.studentIds = [currentStudentId];
+              console.log("Loaded current student ID:", this.studentIds[0]);
+            } else {
+              console.log("No current student ID found");
+              this.studentIds = [];
+            }
           } catch (error) {
             console.error("Error loading student IDs:", error);
             this.studentIds = [];
           }
         },
 
+        async getCurrentStudentId() {
+          return localStorage.getItem("currentStudentId");
+        },
+
         async loadClassroomIds() {
           this.classroomIds = new Set();
-
           try {
             for (const studentId of this.studentIds) {
               const studentDoc = await getDoc(doc(db, "students", studentId));
@@ -251,17 +250,47 @@
           }
         },
 
+        // NEW FUNCTION: Determine the current classroom ID
+        async determineCurrentClassroom() {
+          try {
+            // Get the current student's classroom
+            if (this.studentIds.length > 0) {
+              const currentStudentId = this.studentIds[0];
+              const studentDoc = await getDoc(
+                doc(db, "students", currentStudentId),
+              );
+              if (studentDoc.exists()) {
+                const studentData = studentDoc.data();
+                this.currentClassroomId = studentData.classroomId;
+                console.log("Current classroom ID:", this.currentClassroomId);
+              } else {
+                console.log("Current student document not found");
+                this.currentClassroomId = null;
+              }
+            } else {
+              console.log("No student IDs available");
+              this.currentClassroomId = null;
+            }
+          } catch (error) {
+            console.error("Error determining current classroom:", error);
+            this.currentClassroomId = null;
+          }
+        },
+
         async getChatParticipants() {
           const participants = [];
 
           try {
-            console.log("Getting chat participants...");
+            console.log("Getting chat participants for current classroom...");
 
-            // Get teachers from classrooms
-            for (const classroomId of this.classroomIds) {
-              console.log("Processing classroom:", classroomId);
+            // Only get teacher from current classroom
+            if (this.currentClassroomId) {
+              console.log(
+                "Processing current classroom:",
+                this.currentClassroomId,
+              );
               const classroomDoc = await getDoc(
-                doc(db, "classrooms", classroomId),
+                doc(db, "classrooms", this.currentClassroomId),
               );
               if (classroomDoc.exists()) {
                 const classroomData = classroomDoc.data();
@@ -285,7 +314,7 @@
                           `${teacherData.firstName} ${teacherData.lastName}`.trim() ||
                           "Teacher",
                         type: "teacher",
-                        classroomId: classroomId,
+                        classroomId: this.currentClassroomId,
                         classroomName:
                           classroomData.classroomName || "Classroom",
                       });
@@ -300,17 +329,18 @@
               } else {
                 console.log(
                   "Classroom document not found for ID:",
-                  classroomId,
+                  this.currentClassroomId,
                 );
               }
-            }
 
-            // Get other parents from the same classrooms
-            for (const classroomId of this.classroomIds) {
-              console.log("Looking for parents in classroom:", classroomId);
+              // Get other parents from the current classroom
+              console.log(
+                "Looking for parents in current classroom:",
+                this.currentClassroomId,
+              );
               const studentsQuery = query(
                 collection(db, "students"),
-                where("classroomId", "==", classroomId),
+                where("classroomId", "==", this.currentClassroomId),
               );
 
               const studentsSnapshot = await getDocs(studentsQuery);
@@ -349,7 +379,7 @@
                           studentName:
                             `${studentData.firstName} ${studentData.lastName}`.trim() ||
                             "Student",
-                          classroomId: classroomId,
+                          classroomId: this.currentClassroomId,
                           classroomName:
                             studentData.classroomName || "Classroom",
                         });
@@ -360,19 +390,24 @@
                   }
                 }
               }
+            } else {
+              console.log("No current classroom ID available");
             }
           } catch (error) {
             console.error("Error loading chat participants:", error);
           }
 
-          console.log("Final participants list:", participants);
+          console.log(
+            "Final participants list (current classroom only):",
+            participants,
+          );
           return participants;
         },
 
+        // Update getOrCreateChatId to use current classroom
         async getOrCreateChatId(participantId) {
           try {
-            // Check if chat already exists using your database structure
-            // Look for chats where current user is parentId and participant is teacherId, or vice versa
+            // Check if chat already exists
             const chatsAsParentQuery = query(
               collection(db, "chats"),
               where("parentId", "==", this.currentUser.uid),
@@ -423,15 +458,13 @@
                 chatData = {
                   parentId: this.currentUser.uid,
                   teacherId: participantId,
-                  classroomId: this.classroomIds[0] || "", // Use first classroom
+                  classroomId: this.currentClassroomId || "", // Use current classroom ID
                   createdAt: serverTimestamp(),
                   lastMessage: "",
                   lastMessageTime: serverTimestamp(),
                 };
               } else if (participantData.role === "parent") {
-                // Current user is ???, participant is parent
-                // For parent-to-parent chats, we need to decide on a structure
-                // For now, let's use parentId1 and parentId2
+                // Current user is parent, participant is parent
                 const userDoc = await getDoc(
                   doc(db, "users", this.currentUser.uid),
                 );
@@ -441,7 +474,7 @@
                   chatData = {
                     parentId1: this.currentUser.uid,
                     parentId2: participantId,
-                    classroomId: this.classroomIds[0] || "",
+                    classroomId: this.currentClassroomId || "", // Use current classroom ID
                     createdAt: serverTimestamp(),
                     lastMessage: "",
                     lastMessageTime: serverTimestamp(),
@@ -593,7 +626,7 @@
                     name: `${teacherData.firstName} ${teacherData.lastName}`.trim(),
                     type: "teacher",
                     classroomId: chatData.classroomId,
-                    classroomName: "Classroom", // You might want to fetch the actual classroom name
+                    classroomName: "Classroom",
                   });
                 }
               }
@@ -724,19 +757,19 @@
           chatItem.dataset.classroomName = chatData.classroomName || "";
 
           chatItem.innerHTML = `
-            <div class="avatar"></div>
-            <div class="chat-info">
-                <div class="chat-name">${chatData.name}</div>
-                <div class="chat-sub">
-                    ${
-                      chatData.type === "teacher"
-                        ? `Teacher - ${chatData.classroomName}`
-                        : `Parent - ${chatData.studentName}'s parent`
-                    }
-                </div>
-            </div>
-            <div class="unread-badge" style="display: none;">0</div>
-        `;
+      <div class="avatar"></div>
+      <div class="chat-info">
+          <div class="chat-name">${chatData.name}</div>
+          <div class="chat-sub">
+              ${
+                chatData.type === "teacher"
+                  ? `Teacher - ${chatData.classroomName}`
+                  : `Parent - ${chatData.studentName}'s parent`
+              }
+          </div>
+      </div>
+      <div class="unread-badge" style="display: none;">0</div>
+    `;
 
           return chatItem;
         },
@@ -765,9 +798,7 @@
             });
           });
         },
-        // Update the markMessagesAsRead function to properly update Firestore
 
-        // Update the markMessagesAsRead function to avoid the composite index requirement
         async markMessagesAsRead(chatId) {
           try {
             console.log("Marking messages as read for chat:", chatId);
@@ -825,31 +856,6 @@
           }
         },
 
-        // Also update the updateUnreadCount function to be more efficient
-        updateUnreadCount(chatId, snapshot) {
-          let unreadCount = 0;
-
-          snapshot.forEach((doc) => {
-            const message = doc.data();
-            // Count messages that are unread and not sent by current user
-            if (
-              message.read === false &&
-              message.senderId !== this.currentUser.uid
-            ) {
-              unreadCount++;
-            }
-          });
-
-          console.log(`Chat ${chatId} has ${unreadCount} unread messages`);
-
-          // Store the unread count
-          this.unreadCounts.set(chatId, unreadCount);
-
-          // Update the badge in the sidebar
-          this.updateChatBadge(chatId, unreadCount);
-        },
-
-        // Update the setupChatListeners to properly initialize unread counts
         async setupChatListeners() {
           // Clean up previous listeners
           this.unsubscribeListeners.forEach((unsubscribe) => unsubscribe());
@@ -881,7 +887,7 @@
             }
           }
         },
-        // Add this debug function to check the current state
+
         async debugChatState(chatId) {
           try {
             const messagesQuery = query(
@@ -918,7 +924,6 @@
           }
         },
 
-        // Update the switchToChat function to ensure messages are marked as read
         async switchToChat(
           chatId,
           participantName,
@@ -977,9 +982,8 @@
             chatBody.scrollTop = chatBody.scrollHeight;
 
             // Mark messages as read when opening the chat
-            await this.markMessagesAsRead(chatId);
-            // In switchToChat function, add this line before marking as read:
             await this.debugChatState(chatId);
+            await this.markMessagesAsRead(chatId);
           } catch (error) {
             console.error("Error loading messages:", error);
             chatBody.innerHTML =
@@ -987,6 +991,7 @@
           }
         },
       };
+
       const BadgeService = {
         currentUser: null,
         studentIds: [],
@@ -1036,53 +1041,24 @@
           });
         },
 
+        // In BadgeService
         async loadStudentIds() {
           try {
-            const studentsQuery = query(
-              collection(db, "students"),
-              where("parentId", "==", this.currentUser.uid),
+            // Use the same logic as ChatService to get current student
+            const currentStudentId = await this.getCurrentStudentId();
+            this.studentIds = currentStudentId ? [currentStudentId] : [];
+            console.log(
+              "BadgeService - Loaded current student ID:",
+              this.studentIds[0],
             );
-
-            const querySnapshot = await getDocs(studentsQuery);
-            this.studentIds = querySnapshot.docs.map((doc) => doc.id);
-            console.log("Loaded student IDs:", this.studentIds);
-
-            // If no students found with direct parentId match, try alternative approach
-            if (this.studentIds.length === 0) {
-              console.log(
-                "No students found with direct parentId match, trying alternative...",
-              );
-
-              // Get current parent's name
-              const parentDoc = await getDoc(
-                doc(db, "users", this.currentUser.uid),
-              );
-              if (parentDoc.exists()) {
-                const parentData = parentDoc.data();
-                const parentName =
-                  `${parentData.firstName} ${parentData.lastName}`.trim();
-
-                if (parentName) {
-                  // Look for students with matching parentName
-                  const allStudentsQuery = query(collection(db, "students"));
-                  const allStudentsSnapshot = await getDocs(allStudentsQuery);
-
-                  const matchingStudents = allStudentsSnapshot.docs.filter(
-                    (doc) => {
-                      const studentData = doc.data();
-                      return studentData.parentName === parentName;
-                    },
-                  );
-
-                  this.studentIds = matchingStudents.map((doc) => doc.id);
-                  console.log("Found students by parentName:", this.studentIds);
-                }
-              }
-            }
           } catch (error) {
-            console.error("Error loading student IDs:", error);
+            console.error("Error loading student IDs in BadgeService:", error);
             this.studentIds = [];
           }
+        },
+
+        async getCurrentStudentId() {
+          return localStorage.getItem("currentStudentId");
         },
         async getClassroomIds() {
           const classroomIds = new Set();
@@ -1203,7 +1179,201 @@
       };
 
       // Initialize everything
+      // Initialize everything
+      // Initialize everything with student selector
       document.addEventListener("DOMContentLoaded", async function () {
+        showLoading();
+
+        try {
+          // Wait for authentication first
+          const user = await getCurrentUser();
+
+          if (!user) {
+            console.error("No user logged in");
+            hideLoading();
+            return;
+          }
+
+          // Get all students for current user
+          const students = await getStudentsForCurrentUser(user);
+
+          if (students.length === 0) {
+            console.error("No students found for current user");
+            hideLoading();
+            showError("No students found for your account.");
+            return;
+          }
+
+          // If only one student, use it automatically
+          if (students.length === 1) {
+            const correctStudentId = students[0].id;
+            localStorage.setItem("currentStudentId", correctStudentId);
+            console.log("Single student found, using:", correctStudentId);
+            await initializeMessagingApp(); // Renamed this function
+          } else {
+            // Multiple students - show selector
+            await showStudentSelector(students);
+          }
+        } catch (error) {
+          console.error("Error initializing:", error);
+          hideLoading();
+          showError("Error loading student information.");
+        }
+      });
+
+      // Wait for authentication to be ready
+      function getCurrentUser() {
+        return new Promise((resolve) => {
+          const auth = getAuth();
+
+          // Check if user is already logged in
+          const user = auth.currentUser;
+          if (user) {
+            resolve(user);
+            return;
+          }
+
+          // Wait for auth state change
+          const unsubscribe = onAuthStateChanged(auth, (user) => {
+            unsubscribe();
+            resolve(user);
+          });
+
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            unsubscribe();
+            resolve(null);
+          }, 5000);
+        });
+      }
+
+      async function getStudentsForCurrentUser(user) {
+        try {
+          if (!user) return [];
+
+          const studentsQuery = query(
+            collection(db, "students"),
+            where("parentId", "==", user.uid),
+          );
+
+          const studentsSnapshot = await getDocs(studentsQuery);
+
+          return studentsSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            firstName: doc.data().firstName || "Unknown",
+            lastName: doc.data().lastName || "Student",
+            classroomName: doc.data().classroomName || "Classroom",
+          }));
+        } catch (error) {
+          console.error("Error getting students:", error);
+          return [];
+        }
+      }
+
+      async function showStudentSelector(students) {
+        // Create student selector UI
+        const selectorHTML = `
+    <div id="student-selector-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 10000; font-family: 'Poppins', sans-serif;">
+      <div style="background: white; padding: 30px; border-radius: 15px; min-width: 400px; max-width: 90%; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <i class="fas fa-user-graduate" style="font-size: 3rem; color: #3498db; margin-bottom: 10px;"></i>
+          <h3 style="margin: 10px 0 5px 0; color: #2c3e50;">Select Student</h3>
+          <p style="color: #666; margin: 0;">Choose which student to view messages for</p>
+        </div>
+        
+        <div style="margin: 20px 0;">
+          <label for="student-select" style="display: block; margin-bottom: 8px; font-weight: 600; color: #2c3e50;">Student:</label>
+          <select id="student-select" style="width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 16px; background: white; cursor: pointer; transition: border-color 0.3s;">
+            ${students
+              .map(
+                (student) =>
+                  `<option value="${student.id}">${student.firstName} ${student.lastName} - ${student.classroomName}</option>`,
+              )
+              .join("")}
+          </select>
+        </div>
+        
+        <button id="confirm-student" style="width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background-color 0.3s;">
+          <i class="fas fa-check"></i> Confirm Selection
+        </button>
+        
+        <div style="margin-top: 15px; text-align: center;">
+          <small style="color: #888;">You can change this later in settings</small>
+        </div>
+      </div>
+    </div>
+  `;
+
+        document.body.insertAdjacentHTML("beforeend", selectorHTML);
+
+        // Add hover effects
+        const confirmBtn = document.getElementById("confirm-student");
+        const studentSelect = document.getElementById("student-select");
+
+        confirmBtn.addEventListener("mouseenter", () => {
+          confirmBtn.style.backgroundColor = "#2980b9";
+        });
+
+        confirmBtn.addEventListener("mouseleave", () => {
+          confirmBtn.style.backgroundColor = "#3498db";
+        });
+
+        studentSelect.addEventListener("focus", () => {
+          studentSelect.style.borderColor = "#3498db";
+        });
+
+        studentSelect.addEventListener("blur", () => {
+          studentSelect.style.borderColor = "#e0e0e0";
+        });
+
+        // Set initial selection if exists in localStorage
+        const currentStudentId = localStorage.getItem("currentStudentId");
+        if (
+          currentStudentId &&
+          students.find((s) => s.id === currentStudentId)
+        ) {
+          studentSelect.value = currentStudentId;
+        }
+
+        confirmBtn.addEventListener("click", async () => {
+          const selectedStudentId = studentSelect.value;
+          const selectedStudent = students.find(
+            (s) => s.id === selectedStudentId,
+          );
+
+          localStorage.setItem("currentStudentId", selectedStudentId);
+          console.log(
+            "Selected student:",
+            selectedStudent.firstName,
+            selectedStudent.lastName,
+          );
+
+          // Add loading state to button
+          confirmBtn.innerHTML =
+            '<i class="fas fa-spinner fa-spin"></i> Loading...';
+          confirmBtn.disabled = true;
+
+          // Remove selector with fade effect
+          const overlay = document.getElementById("student-selector-overlay");
+          overlay.style.opacity = "0";
+          overlay.style.transition = "opacity 0.3s";
+
+          setTimeout(() => {
+            overlay.remove();
+            initializeMessagingApp(); // Renamed this function
+          }, 300);
+        });
+
+        // Allow Enter key to confirm selection
+        studentSelect.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            confirmBtn.click();
+          }
+        });
+      }
+
+      // Renamed this function to avoid conflict with Firebase initializeApp
+      async function initializeMessagingApp() {
         showLoading();
 
         try {
@@ -1237,14 +1407,168 @@
               messageInput.value = "";
             }
           });
+
+          // Setup new message modal functionality
+          const newMessageBtn = document.querySelector(".new-message");
+          const newMessageModal = document.getElementById("new-message-modal");
+          const modalCloseBtn = document.querySelector(".close-btn");
+          const recipientList = document.querySelector(".recipient-list");
+
+          newMessageBtn.addEventListener("click", async () => {
+            newMessageModal.style.display = "block";
+
+            // Load participants for modal
+            const participants = await ChatService.getChatParticipants();
+            recipientList.innerHTML = "";
+
+            if (participants.length === 0) {
+              recipientList.innerHTML =
+                '<div class="no-recipients">No recipients available</div>';
+              return;
+            }
+
+            participants.forEach((participant) => {
+              const li = document.createElement("li");
+              li.dataset.participantId = participant.id;
+              li.dataset.name = participant.name;
+              li.dataset.type = participant.type;
+              li.dataset.studentName = participant.studentName || "";
+              li.dataset.classroomName = participant.classroomName || "";
+
+              li.innerHTML = `
+            <span class="recipient-name">${participant.name}</span>
+            <span class="recipient-info">
+                ${
+                  participant.type === "teacher"
+                    ? `Teacher - ${participant.classroomName}`
+                    : `Parent - ${participant.studentName}'s parent`
+                }
+            </span>
+        `;
+
+              recipientList.appendChild(li);
+            });
+
+            // Add click listeners to modal recipients
+            recipientList.querySelectorAll("li").forEach((item) => {
+              item.addEventListener("click", async () => {
+                const participantId = item.dataset.participantId;
+                const participantName = item.dataset.name;
+                const participantType = item.dataset.type;
+                const studentName = item.dataset.studentName;
+                const classroomName = item.dataset.classroomName;
+
+                const chatId =
+                  await ChatService.getOrCreateChatId(participantId);
+
+                // Find and click the corresponding chat item
+                const chatItem = document.querySelector(
+                  `.chat-item[data-participant-id="${participantId}"]`,
+                );
+                if (chatItem) {
+                  chatItem.click();
+                } else {
+                  // If chat item doesn't exist yet, reload chat list
+                  await ChatService.loadChatList();
+                  const newChatItem = document.querySelector(
+                    `.chat-item[data-participant-id="${participantId}"]`,
+                  );
+                  if (newChatItem) newChatItem.click();
+                }
+
+                newMessageModal.style.display = "none";
+              });
+            });
+          });
+
+          modalCloseBtn.addEventListener("click", () => {
+            newMessageModal.style.display = "none";
+          });
+
+          window.addEventListener("click", (e) => {
+            if (e.target === newMessageModal) {
+              newMessageModal.style.display = "none";
+            }
+          });
+
+          // Add student switcher to the UI
+          addStudentSwitcher();
         } catch (error) {
-          console.error("Error initializing:", error);
+          console.error("Error initializing app:", error);
+          showError("Error loading messages. Please try again.");
         } finally {
           hideLoading();
         }
-      });
+      }
 
-      // New Message Modal functionality
+      function addStudentSwitcher() {
+        // Add a student switcher button to the header or sidebar
+        const currentStudentId = localStorage.getItem("currentStudentId");
+        if (!currentStudentId) return;
+
+        // Create switcher button
+        const switcherHTML = `
+    <div class="student-switcher" style="margin: 10px 0; text-align: center;">
+      <button id="switch-student-btn" style="background: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 20px; padding: 8px 16px; font-size: 12px; color: #666; cursor: pointer; transition: all 0.3s;">
+        <i class="fas fa-sync-alt"></i> Switch Student
+      </button>
+    </div>
+  `;
+
+        // Add to sidebar (you can change this location)
+        const sidebar = document.querySelector(".sidebar");
+        if (sidebar) {
+          const newMessageBtn = sidebar.querySelector(".new-message");
+          if (newMessageBtn) {
+            newMessageBtn.insertAdjacentHTML("afterend", switcherHTML);
+
+            document
+              .getElementById("switch-student-btn")
+              .addEventListener("click", () => {
+                localStorage.removeItem("currentStudentId");
+                location.reload();
+              });
+          }
+        }
+      }
+
+      function showError(message) {
+        const errorHTML = `
+    <div style="position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10000;">
+      <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: #e74c3c; margin-bottom: 15px;"></i>
+      <h3 style="margin: 0 0 10px 0; color: #2c3e50;">Error</h3>
+      <p style="color: #666; margin: 0 0 20px 0;">${message}</p>
+      <button onclick="location.reload()" style="background: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+        Try Again
+      </button>
+    </div>
+  `;
+        document.body.insertAdjacentHTML("beforeend", errorHTML);
+      }
+
+      // Add some CSS for better styling
+      const style = document.createElement("style");
+      style.textContent = `
+  #student-selector-overlay {
+    font-family: 'Poppins', sans-serif;
+  }
+  
+  #confirm-student:hover {
+    background-color: #2980b9 !important;
+  }
+  
+  #student-select:focus {
+    border-color: #3498db !important;
+    outline: none;
+  }
+  
+  .student-switcher button:hover {
+    background: #e9ecef !important;
+    border-color: #3498db !important;
+    color: #3498db !important;
+  }
+`;
+      document.head.appendChild(style); // New Message Modal functionality
       document.addEventListener("DOMContentLoaded", () => {
         const newMessageBtn = document.querySelector(".new-message");
         const newMessageModal = document.getElementById("new-message-modal");

@@ -102,16 +102,7 @@
         getAuth,
         onAuthStateChanged,
       } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-      const firebaseConfig = {
-        apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
-        authDomain: "acadbird-379e3.firebaseapp.com",
-        projectId: "acadbird-379e3",
-        storageBucket: "acadbird-379e3.firebasestorage.app",
-        messagingSenderId: "575491576951",
-        appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-        measurementId: "G-N6Z672SXWJ",
-      };
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
       // Initialize Firebase
       const app = initializeApp(firebaseConfig);
@@ -443,6 +434,7 @@
       };
 
       // Initialize everything on page load
+      // Initialize everything on page load
       document.addEventListener("DOMContentLoaded", async () => {
         showLoading();
 
@@ -450,18 +442,31 @@
           onAuthStateChanged(auth, async (user) => {
             if (!user) return hideLoading();
 
-            // Get all classroom IDs for this parent
+            // Get the classroom ID for the current student user
             const studentQuery = query(
               collection(db, "students"),
-              where("parentId", "==", user.uid),
+              where("parentId", "==", user.uid), // Changed from parentId to userId
             );
             const studentSnap = await getDocs(studentQuery);
-            const classroomIds = studentSnap.docs
-              .map((doc) => doc.data().classroomId)
-              .filter(Boolean); // Remove undefined/null
 
-            if (classroomIds.length > 0) {
-              await loadResources(classroomIds);
+            if (studentSnap.empty) {
+              console.log("No student found for current user");
+              document.getElementById("resourcesSection").innerHTML =
+                `<p class="no-resources">No student profile found.</p>`;
+              hideLoading();
+              return;
+            }
+
+            // Get the classroom ID from the student document
+            const studentData = studentSnap.docs[0].data();
+            const classroomId = studentData.classroomId;
+
+            if (classroomId) {
+              await loadResources([classroomId]); // Pass as array with single classroom
+            } else {
+              console.log("No classroom assigned to student");
+              document.getElementById("resourcesSection").innerHTML =
+                `<p class="no-resources">No classroom assigned.</p>`;
             }
 
             await BadgeService.init();
