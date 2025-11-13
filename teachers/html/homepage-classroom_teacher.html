@@ -390,12 +390,22 @@
           // Get all read notifications
           const readNotifications = await getReadNotifications(teacherId);
 
-          // Count unread calendar notifications
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
           let unreadCount = 0;
           calendarSnapshot.forEach((doc) => {
-            const key = `calendar_${doc.id}`;
-            if (!readNotifications[key]) {
-              unreadCount++;
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
             }
           });
 

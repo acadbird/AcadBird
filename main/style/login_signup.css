@@ -1,6 +1,6 @@
 /* Global Styles */
 body {
-  font-family: 'Poppins', sans-serif;
+  font-family: "Poppins", sans-serif;
   background-color: #f5f7fa;
   margin: 0;
   padding: 0;
@@ -25,7 +25,7 @@ body {
   flex-direction: row;
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   max-width: 900px; /* Adjust max-width as needed */
   width: 100%;
@@ -64,7 +64,7 @@ body {
 .tagline {
   font-size: 1rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.8);
+  color: rgba(255, 255, 255, 0.8);
   padding: 0 10px;
 }
 
@@ -134,7 +134,6 @@ body {
   text-decoration: underline;
 }
 
-
 /* Buttons and Links */
 .buttons {
   display: flex;
@@ -152,12 +151,11 @@ body {
   font-weight: 600;
   flex: 1;
   transition: background-color 0.3s;
-  background-color: #FFc414;
-  
+  background-color: #ffc414;
 }
 
 .back-btn {
-  background-color: #FF8214; /* Corrected to FF8214 */
+  background-color: #ff8214; /* Corrected to FF8214 */
   color: #fff;
 }
 
@@ -166,7 +164,7 @@ body {
 }
 
 .next-btn {
-  background-color: #FFC414; /* Corrected to FFC414 */
+  background-color: #ffc414; /* Corrected to FFC414 */
   color: #fff;
 }
 
@@ -191,7 +189,6 @@ body {
 .signup-link a:hover {
   text-decoration: underline;
 }
-
 
 /* Verification Page Specific Styles */
 .verification-form {
@@ -232,40 +229,39 @@ body {
   color: #ccc;
 }
 
-
 /* =======================
    Sign Up Form Specific Styles
 ======================= */
 
 .signup-form {
-    display: flex;
-    flex-direction: column;
-    gap: 15px; /* Consistent vertical spacing */
+  display: flex;
+  flex-direction: column;
+  gap: 15px; /* Consistent vertical spacing */
 }
 
 /* Container for First Name and Last Name */
 .form-row {
-    display: flex;
-    gap: 20px; /* Space between First Name and Last Name fields */
-    width: 100%;
+  display: flex;
+  gap: 20px; /* Space between First Name and Last Name fields */
+  width: 100%;
 }
 
 .form-row .form-group {
-    flex: 1; /* Makes each name field take up half the width */
-    margin-bottom: 0; /* Remove extra margin from .form-group within a row */
+  flex: 1; /* Makes each name field take up half the width */
+  margin-bottom: 0; /* Remove extra margin from .form-group within a row */
 }
 
 /* Terms and Conditions Text */
 .terms {
-    font-size: 0.85rem;
-    color: #666;
-    margin: 5px 0 20px 0; /* Space above and below the text */
-    text-align: left;
+  font-size: 0.85rem;
+  color: #666;
+  margin: 5px 0 20px 0; /* Space above and below the text */
+  text-align: left;
 }
 
 /* Ensure buttons take equal space */
 .signup-form .buttons {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 /* =======================
@@ -273,49 +269,49 @@ body {
 ======================= */
 
 @media (max-width: 768px) {
-    body {
-        min-height: auto;
-    }
+  body {
+    min-height: auto;
+  }
 
-    /* Stack the panels vertically */
-    .card {
-        flex-direction: column;
-        max-width: 95%;
-        margin: 20px 0;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
+  /* Stack the panels vertically */
+  .card {
+    flex-direction: column;
+    max-width: 95%;
+    margin: 20px 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
 
-    /* Adjust padding for smaller screens */
-    .left-panel {
-        padding: 30px 20px;
-        order: -1; /* Place the left panel (branding) at the top */
-        border-radius: 16px 16px 0 0;
-    }
-    
-    .right-panel {
-        padding: 30px 20px;
-    }
+  /* Adjust padding for smaller screens */
+  .left-panel {
+    padding: 30px 20px;
+    order: -1; /* Place the left panel (branding) at the top */
+    border-radius: 16px 16px 0 0;
+  }
 
-    /* Make the logo smaller on mobile */
-    .logo {
-        width: 150px;
-    }
+  .right-panel {
+    padding: 30px 20px;
+  }
 
-    .brand {
-        font-size: 1.8rem;
-    }
+  /* Make the logo smaller on mobile */
+  .logo {
+    width: 150px;
+  }
 
-    .tagline {
-        font-size: 0.9rem;
-    }
-    
-    .welcome h2 {
-        font-size: 1.5rem;
-    }
+  .brand {
+    font-size: 1.8rem;
+  }
 
-    /* Stack the name fields (First Name/Last Name) vertically on mobile */
-    .form-row {
-        flex-direction: column;
-        gap: 0;
-    }
+  .tagline {
+    font-size: 0.9rem;
+  }
+
+  .welcome h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Stack the name fields (First Name/Last Name) vertically on mobile */
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
 }

@@ -112,6 +112,88 @@
         background-color: inherit !important;
       }
     </style>
+    <style>
+      .save-cancel-buttons {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        align-items: center;
+      }
+
+      .save-changes-btn,
+      .cancel-changes-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        min-width: 120px;
+      }
+
+      .save-changes-btn {
+        background: linear-gradient(
+          135deg,
+          #ffd700,
+          #ff8c00
+        ) !important; /* Full color on hover */
+        border: 2px solid #000000 !important;
+        color: white;
+      }
+
+      .save-changes-btn:hover:not(.disabled) {
+        background: linear-gradient(
+          135deg,
+          #ffd700,
+          #ff8c00
+        ) !important; /* Full color on hover */
+        border: 2px solid #000000 !important;
+        transform: translateY(-1px);
+      }
+      .cancel-changes-btn {
+        background-color: #cc1111;
+        color: white;
+      }
+
+      .cancel-changes-btn:hover:not(.disabled) {
+        background-color: #fb2004;
+        transform: translateY(-1px);
+      }
+
+      .disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .disabled:hover {
+        background-color: inherit !important;
+      }
+
+      /* Notification badge styles */
+      .notification-link {
+        position: relative;
+        display: inline-block;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: #ff4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -140,28 +222,39 @@
           class="middle-logo"
         />
         <div class="nav-icons">
-          <img
-            src="../../main/img/Notification.png"
-            alt="Notifications"
-            class="icon"
-          />
-          <img src="../../main/img/Help.png" alt="Help" class="icon" />
-          <div class="account-menu">
+          <a
+            href="notification_teacher.html"
+            target="_blank"
+            class="notification-link"
+          >
             <img
-              src="../../main/img/account icon.png"
-              alt="User Account"
+              src="../../main/img/Notification.png"
+              alt="Notifications"
               class="icon"
             />
-            <i class="fas fa-caret-down dropdown-icon"></i>
-            <div class="dropdown-content">
-              <a href="settings_teacher.html" id="settings-link"
-                ><i class="fas fa-cog"></i> Settings</a
-              >
-              <a href="../../main/html/login.html" id="logout-link"
-                ><i class="fas fa-sign-out-alt"></i> Log Out</a
-              >
+            <span class="notification-badge" id="notification-badge">0</span>
+          </a>
+          <a href="help_teacher.html" target="_blank">
+            <img src="../../main/img/Help.png" alt="Help" class="icon" />
+          </a>
+          <a href="settings_teacher.html" target="_blank">
+            <div class="account-menu">
+              <img
+                src="../../main/img/account icon.png"
+                alt="User Account"
+                class="icon"
+              />
+              <i class="fas fa-caret-down dropdown-icon"></i>
+              <div class="dropdown-content">
+                <a href="settings_teacher.html" id="settings-link"
+                  ><i class="fas fa-cog"></i> Settings</a
+                >
+                <a href="../../main/html/login.html" id="logout-link"
+                  ><i class="fas fa-sign-out-alt"></i> Log Out</a
+                >
+              </div>
             </div>
-          </div>
+          </a>
         </div>
       </div>
 
@@ -267,8 +360,9 @@
     </div>
     <script>
       document.addEventListener("DOMContentLoaded", function () {
-        // ⚠️ IMPORTANT: 'auth' and 'db' objects are now defined in a <script> tag
-        // in the HTML BEFORE this file is loaded.
+        // Use the modular Firebase SDK that was imported in the module script
+        const auth = window.auth;
+        const db = window.db;
 
         // --- Element Selections ---
         const accountMenu = document.querySelector(".account-menu");
@@ -322,11 +416,13 @@
           }
 
           try {
-            // Fetch the document from the 'users' collection using the UID
-            const doc = await db.collection("users").doc(uid).get();
+            // Use the modular Firestore API
+            const userDoc = await window.firebaseModules.getDoc(
+              window.firebaseModules.doc(db, "users", uid),
+            );
 
-            if (doc.exists) {
-              const data = doc.data();
+            if (userDoc.exists()) {
+              const data = userDoc.data();
 
               // Populate the form fields
               firstNameInput.value = data.firstName || "";
@@ -373,15 +469,6 @@
           );
         }
 
-        /**
-         * Update save and cancel buttons visibility and state
-         */
-        /**
-         * Update save and cancel buttons visibility and state
-         */
-        /**
-         * Update save and cancel buttons visibility and state
-         */
         /**
          * Update save and cancel buttons visibility and state
          */
@@ -457,12 +544,15 @@
           }
 
           try {
-            // Update Firestore
-            await db.collection("users").doc(user.uid).update({
-              firstName: newFirstName,
-              lastName: newLastName,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            });
+            // Update Firestore using modular API
+            await window.firebaseModules.updateDoc(
+              window.firebaseModules.doc(db, "users", user.uid),
+              {
+                firstName: newFirstName,
+                lastName: newLastName,
+                updatedAt: window.firebaseModules.serverTimestamp(),
+              },
+            );
 
             // Update email in Firebase Auth if changed
             if (newEmail !== originalEmail) {
@@ -497,6 +587,110 @@
             } else {
               alert("Failed to save changes: " + error.message);
             }
+          }
+        }
+
+        // Notification badge functionality - UPDATED for modular SDK
+        async function updateNotificationBadge() {
+          try {
+            const currentUser = auth.currentUser;
+
+            if (!currentUser) {
+              console.log("❌ No current user found");
+              return;
+            }
+
+            console.log(
+              "🔄 Updating notification badge for user:",
+              currentUser.uid,
+            );
+
+            // Import the necessary modular functions
+            const { collection, query, where, getDocs } = await import(
+              "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"
+            );
+
+            // Get teacher's classrooms
+            const classroomsQuery = query(
+              collection(db, "classrooms"),
+              where("teacherId", "==", currentUser.uid),
+            );
+            const classroomsSnapshot = await getDocs(classroomsQuery);
+            const teacherClassroomIds = [];
+            classroomsSnapshot.forEach((doc) => {
+              teacherClassroomIds.push(doc.id);
+            });
+
+            // Get all calendar events
+            const calendarSnapshot = await getDocs(collection(db, "calendar"));
+
+            // Get all students with status "active" in teacher's classrooms
+            let studentsSnapshot;
+            if (teacherClassroomIds.length > 0) {
+              const studentsQuery = query(
+                collection(db, "students"),
+                where("status", "==", "active"),
+                where("classroomId", "in", teacherClassroomIds),
+              );
+              studentsSnapshot = await getDocs(studentsQuery);
+            } else {
+              studentsSnapshot = { docs: [] };
+            }
+
+            // Get all read notifications
+            const readQuery = query(
+              collection(db, "notification_teacher"),
+              where("teacherID", "==", currentUser.uid),
+              where("status", "==", "read"),
+            );
+            const readSnapshot = await getDocs(readQuery);
+
+            const readNotifications = {};
+            readSnapshot.forEach((doc) => {
+              const data = doc.data();
+              const key = `${data.type}_${data.notificationID}`;
+              readNotifications[key] = true;
+            });
+
+            // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+
+            let unreadCount = 0;
+            calendarSnapshot.forEach((doc) => {
+              const eventData = doc.data();
+              const eventDate = new Date(eventData.date);
+              eventDate.setHours(0, 0, 0, 0);
+
+              // Only count if event is today or in the future
+              if (eventDate >= currentDate) {
+                const key = `calendar_${doc.id}`;
+                if (!readNotifications[key]) {
+                  unreadCount++;
+                }
+              }
+            });
+
+            // Count unread student join notifications
+            studentsSnapshot.forEach((doc) => {
+              const key = `student_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
+            });
+
+            // Update badge
+            const badge = document.getElementById("notification-badge");
+            if (badge) {
+              badge.textContent = unreadCount;
+              if (unreadCount === 0) {
+                badge.style.display = "none";
+              } else {
+                badge.style.display = "flex";
+              }
+            }
+          } catch (error) {
+            console.error("❌ Error updating notification badge:", error);
           }
         }
 
@@ -636,7 +830,7 @@
 
         // 9. Authentication Check (Core logic for security and data loading) (RE-ADDED)
         if (typeof auth !== "undefined") {
-          auth.onAuthStateChanged((user) => {
+          auth.onAuthStateChanged(async (user) => {
             if (!user) {
               console.log("No user found. Redirecting to login.");
               // ⚠️ Uncomment this line when ready to enforce login
@@ -654,7 +848,10 @@
               originalEmail = user.email;
 
               // 2. Fetch and load additional profile data from Firestore
-              loadUserProfile(user.uid);
+              await loadUserProfile(user.uid);
+
+              // 3. Update notification badge
+              await updateNotificationBadge();
             }
           });
         } else {

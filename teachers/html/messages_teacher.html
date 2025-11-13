@@ -998,6 +998,20 @@
               if (initialLoad) {
                 chatBody.innerHTML = "";
                 initialLoad = false;
+
+                // Load all existing messages
+                snapshot.forEach((doc) => {
+                  const message = doc.data();
+                  displayNewMessage(message);
+                });
+              } else {
+                // For subsequent updates, only process NEW messages
+                snapshot.docChanges().forEach((change) => {
+                  if (change.type === "added") {
+                    const message = change.doc.data();
+                    displayNewMessage(message);
+                  }
+                });
               }
 
               // If no messages
@@ -1006,12 +1020,6 @@
                   '<div class="message-date">No messages yet. Start the conversation!</div>';
                 return;
               }
-
-              // Process all messages (both existing and new)
-              snapshot.forEach((doc) => {
-                const message = doc.data();
-                displayNewMessage(message);
-              });
             },
             (error) => {
               console.error("❌ Error in message listener:", error);
@@ -1021,7 +1029,6 @@
             },
           );
       }
-
       function createMessageElement(message) {
         const messageDiv = document.createElement("div");
         const isSent = message.senderId === currentTeacher.uid;
@@ -1343,12 +1350,22 @@
             Object.keys(readNotifications).length,
           );
 
-          // Count unread calendar notifications
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
           let unreadCount = 0;
           calendarSnapshot.forEach((doc) => {
-            const key = `calendar_${doc.id}`;
-            if (!readNotifications[key]) {
-              unreadCount++;
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
             }
           });
           console.log("📆 Unread calendar notifications:", unreadCount);

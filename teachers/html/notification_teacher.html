@@ -229,12 +229,22 @@
           // Get all read notifications
           const readNotifications = await getReadNotifications(teacherId);
 
-          // Count unread calendar notifications
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
           let unreadCount = 0;
           calendarSnapshot.forEach((doc) => {
-            const key = `calendar_${doc.id}`;
-            if (!readNotifications[key]) {
-              unreadCount++;
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
             }
           });
 
@@ -253,7 +263,6 @@
           return 0;
         }
       }
-
       // Function to update notification badge
       async function updateNotificationBadge() {
         if (!currentUser) return;
@@ -313,6 +322,7 @@
       }
 
       // Function to fetch calendar events and students, then create notifications
+      // Function to fetch calendar events and students, then create notifications
       async function loadAllNotifications() {
         try {
           const notificationsList =
@@ -364,17 +374,34 @@
           // Create array to hold all notifications
           const allNotifications = [];
 
-          // Process calendar events
+          // Process calendar events - FILTER OUT PAST EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0); // Set to beginning of today for date comparison
+
           calendarSnapshot.forEach((doc) => {
             const eventData = doc.data();
-            const isRead = readNotifications[`calendar_${doc.id}`] || false;
-            allNotifications.push({
-              id: doc.id,
-              type: "calendar",
-              data: eventData,
-              isRead: isRead,
-              timestamp: eventData.createdAt || new Date(),
-            });
+
+            // Check if event date is today or in the future
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0); // Set to beginning of event day for comparison
+
+            if (eventDate >= currentDate) {
+              const isRead = readNotifications[`calendar_${doc.id}`] || false;
+              allNotifications.push({
+                id: doc.id,
+                type: "calendar",
+                data: eventData,
+                isRead: isRead,
+                timestamp: eventData.createdAt || new Date(),
+              });
+            } else {
+              console.log(
+                "Filtered out past event:",
+                eventData.title,
+                "with date:",
+                eventData.date,
+              );
+            }
           });
 
           // Process student join events
@@ -431,7 +458,6 @@
             '<div class="notification-item">Error loading notifications</div>';
         }
       }
-
       // Function to create notification HTML
       function createNotificationItem(notification) {
         const notificationItem = document.createElement("div");

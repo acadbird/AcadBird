@@ -86,6 +86,102 @@
         background: linear-gradient(90deg, #79de87, #a8e6a3);
       }
     </style>
+    <style>
+      /* Add these styles for the progress bar */
+      .progress-section {
+        margin: 20px 0;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        border: 1px solid #e9ecef;
+      }
+
+      .progress-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .progress-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+      }
+
+      .progress-percentage {
+        font-size: 18px;
+        font-weight: 700;
+        color: #333;
+      }
+
+      .progress-bar-container {
+        width: 100%;
+        height: 20px;
+        background: #e9ecef;
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .progress-bar {
+        height: 100%;
+        border-radius: 10px;
+        transition:
+          width 0.5s ease-in-out,
+          background-color 0.5s ease-in-out;
+      }
+
+      .progress-labels {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 5px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      .progress-level {
+        text-align: center;
+        margin-top: 8px;
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      /* Color states */
+      .progress-low {
+        background: linear-gradient(90deg, #ff5757, #ff8a8a);
+      }
+      .progress-medium {
+        background: linear-gradient(90deg, #ffc107, #ffd54f);
+      }
+      .progress-high {
+        background: linear-gradient(90deg, #79de87, #a8e6a3);
+      }
+
+      /* Notification badge styles */
+      .notification-link {
+        position: relative;
+        display: inline-block;
+      }
+
+      .notification-badge {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        background-color: #ff4444;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+    </style>
   </head>
   <body>
     <div class="container">
@@ -108,17 +204,18 @@
           class="middle-logo"
         />
         <div class="nav-icons">
-          <a href="notification_teacher.html" target="_blank">
+          <a href="notification_teacher.html" class="notification-link">
             <img
               src="../../main/img/Notification.png"
               alt="Notifications"
               class="icon"
             />
+            <span class="notification-badge" id="notification-badge">0</span>
           </a>
-          <a href="help_teacher.html" target="_blank">
+          <a href="help_teacher.html">
             <img src="../../main/img/Help.png" alt="Help" class="icon" />
           </a>
-          <a href="settings_teacher.html" target="_blank">
+          <a href="settings_teacher.html">
             <div class="account-menu">
               <img
                 src="../../main/img/account icon.png"
@@ -366,12 +463,22 @@
             Object.keys(readNotifications).length,
           );
 
-          // Count unread calendar notifications
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
           let unreadCount = 0;
           calendarSnapshot.forEach((doc) => {
-            const key = `calendar_${doc.id}`;
-            if (!readNotifications[key]) {
-              unreadCount++;
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
             }
           });
           console.log("📆 Unread calendar notifications:", unreadCount);
@@ -395,7 +502,6 @@
           return 0;
         }
       }
-
       async function updateNotificationBadge() {
         try {
           const currentUser = auth.currentUser;
@@ -434,14 +540,14 @@
       // Update the navbar HTML to include the badge
       const navIconsHTML = `
     <div class="nav-icons">
-        <a href="notification_teacher.html" target="_blank" class="notification-link">
+        <a href="notification_teacher.html"  class="notification-link">
             <img src="../../main/img/Notification.png" alt="Notifications" class="icon">
             <span class="notification-badge" id="notification-badge">0</span>
         </a>
-        <a href="help_teacher.html" target="_blank">
+        <a href="help_teacher.html">
             <img src="../../main/img/Help.png" alt="Help" class="icon">
         </a>
-        <a href="settings_teacher.html" target="_blank">
+        <a href="settings_teacher.html">
             <div class="account-menu">
                 <img src="../../main/img/account icon.png" alt="User Account" class="icon">
             </div>

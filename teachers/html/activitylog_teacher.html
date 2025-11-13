@@ -36,11 +36,7 @@
           class="middle-logo"
         />
         <div class="nav-icons">
-          <a
-            href="notification_teacher.html"
-            target="_blank"
-            class="notification-link"
-          >
+          <a href="notification_teacher.html" class="notification-link">
             <img
               src="../../main/img/Notification.png"
               alt="Notifications"
@@ -48,10 +44,10 @@
             />
             <span class="notification-badge" id="notification-badge">0</span>
           </a>
-          <a href="help_teacher.html" target="_blank">
+          <a href="help_teacher.html">
             <img src="../../main/img/Help.png" alt="Help" class="icon" />
           </a>
-          <a href="settings_teacher.html" target="_blank">
+          <a href="settings_teacher.html">
             <div class="account-menu">
               <img
                 src="../../main/img/account icon.png"
@@ -607,7 +603,7 @@ ${fileHtml}
         return postElement;
       }
 
-      // Notification badge functionality
+      // Notification badge functionality - UPDATED to exclude past events
       async function getTeacherClassrooms(teacherId) {
         try {
           const classroomsRef = collection(db, "classrooms");
@@ -648,6 +644,7 @@ ${fileHtml}
         }
       }
 
+      // UPDATED: Function to count unread notifications - excludes past events
       async function countUnreadNotifications(teacherId) {
         try {
           // Get all calendar events
@@ -675,12 +672,22 @@ ${fileHtml}
           // Get all read notifications
           const readNotifications = await getReadNotifications(teacherId);
 
-          // Count unread calendar notifications
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
           let unreadCount = 0;
           calendarSnapshot.forEach((doc) => {
-            const key = `calendar_${doc.id}`;
-            if (!readNotifications[key]) {
-              unreadCount++;
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
             }
           });
 
@@ -692,6 +699,7 @@ ${fileHtml}
             }
           });
 
+          console.log("Total unread notifications:", unreadCount);
           return unreadCount;
         } catch (error) {
           console.error("Error counting unread notifications:", error);
@@ -699,6 +707,7 @@ ${fileHtml}
         }
       }
 
+      // UPDATED: Function to update notification badge
       async function updateNotificationBadge() {
         if (!auth.currentUser) return;
 
@@ -719,6 +728,7 @@ ${fileHtml}
           console.log("Notification badge updated:", unreadCount);
         }
       }
+
       // --------------------
       // 2. Load teacher name
       // --------------------
@@ -752,7 +762,7 @@ ${fileHtml}
             // ✅ Load posts after setting teacher name
             await loadPosts();
 
-            // ✅ Update notification badge
+            // ✅ Update notification badge - UPDATED to use the new function
             await updateNotificationBadge();
           } else {
             teacherNameElement.textContent = "Not signed in";
@@ -763,7 +773,6 @@ ${fileHtml}
           hideLoading(); // 👈 always hide loading once done
         }
       });
-
       // Function to load likes for a post - UPDATED for new structure
       async function loadLikesForPost(postId, likeCountSpan, likeBtn) {
         try {

@@ -1,4 +1,12 @@
-import { getFirestore, collection, query, where, getDocs, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // Initialize
@@ -20,11 +28,10 @@ async function sendVerificationCode(email, verificationCode) {
     querySnapshot.forEach(async (userDoc) => {
       const userRef = doc(db, "users", userDoc.id);
       await updateDoc(userRef, {
-        verifCode: verificationCode
+        verifCode: verificationCode,
       });
       console.log("Verification code saved in Firestore for:", email);
     });
-
   } catch (error) {
     console.error("Error saving verification code:", error);
   }

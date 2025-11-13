@@ -1,6 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  getDoc,
+} from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyB7gwN-3GVlJ-a_MTBxqVnc7Oltq5wSvHQ",
@@ -9,9 +16,8 @@ const firebaseConfig = {
   storageBucket: "acadbird-379e3.appspot.com",
   messagingSenderId: "575491576951",
   appId: "1:575491576951:web:70f86aba1e33b871f8a272",
-  measurementId: "G-N6Z672SXWJ"
+  measurementId: "G-N6Z672SXWJ",
 };
-
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -30,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const userCredential = await signInWithEmailAndPassword(
         auth,
         emailInput.value.trim(),
-        passwordInput.value.trim()
+        passwordInput.value.trim(),
       );
 
       const user = userCredential.user;
@@ -40,7 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!userDoc.exists()) throw new Error("No profile found");
 
       const userData = userDoc.data();
-      localStorage.setItem("user", JSON.stringify({ id: user.uid, ...userData }));
+      localStorage.setItem(
+        "user",
+        JSON.stringify({ id: user.uid, ...userData }),
+      );
 
       // Redirect based on role
       switch (userData.role) {

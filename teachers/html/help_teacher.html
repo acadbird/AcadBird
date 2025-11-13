@@ -69,8 +69,13 @@
             class="middle-logo"
           />
           <div class="nav-icons">
-            <a href="notification_teacher.html" title="Notifications">
+            <a
+              href="notification_teacher.html"
+              title="Notifications"
+              class="notification-link"
+            >
               <i class="fas fa-bell icon"></i>
+              <span class="notification-badge" id="notification-badge">0</span>
             </a>
             <a href="help_teacher.html" title="Help">
               <i class="fas fa-question-circle icon active"></i>
@@ -316,54 +321,125 @@
       </div>
     </div>
 
-    <script>
-      document.addEventListener("DOMContentLoaded", function () {
-        // Function to toggle the main accordion content
-        function toggleAccordion(header) {
-          const targetId = header.getAttribute("data-target");
-          const content = document.getElementById(targetId);
-          const isActive = header.classList.toggle("active");
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+      import {
+        getAuth,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        query,
+        where,
+      } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-          if (isActive) {
-            content.classList.add("show");
-          } else {
-            content.classList.remove("show");
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
 
-            // Collapse all nested articles when the main category closes
-            content
-              .querySelectorAll(".article-header")
-              .forEach((articleHeader) => {
-                articleHeader.classList.remove("active");
-                document
-                  .getElementById(
-                    articleHeader.getAttribute("data-article-target"),
-                  )
-                  .classList.remove("show");
-              });
-          }
-        }
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
 
-        // Function to toggle nested article content
-        function toggleArticle(header) {
-          const targetId = header.getAttribute("data-article-target");
-          const content = document.getElementById(targetId);
-          header.classList.toggle("active");
-          content.classList.toggle("show");
-        }
+      // Notification badge functionality
+      async function updateNotificationBadge() {
+        if (!auth.currentUser) return;
 
-        // Event listeners for main accordion headers
-        document.querySelectorAll(".accordion-header").forEach((header) => {
-          header.addEventListener("click", () => toggleAccordion(header));
-        });
+        try {
+          // Get teacher's classrooms
+          const classroomsRef = collection(db, "classrooms");
+          const classroomsQuery = query(
+            classroomsRef,
+            where("teacherId", "==", auth.currentUser.uid),
+          );
+          const classroomsSnapshot = await getDocs(classroomsQuery);
 
-        // Event listeners for nested article headers
-        document.querySelectorAll(".article-header").forEach((header) => {
-          header.addEventListener("click", (e) => {
-            // Prevent article click from propagating and closing the main accordion
-            e.stopPropagation();
-            toggleArticle(header);
+          const teacherClassroomIds = [];
+          classroomsSnapshot.forEach((doc) => {
+            teacherClassroomIds.push(doc.id);
           });
-        });
+
+          // Get all calendar events
+          const calendarRef = collection(db, "calendar");
+          const calendarSnapshot = await getDocs(calendarRef);
+
+          // Get all students with status "active" in teacher's classrooms
+          let studentsSnapshot;
+          if (teacherClassroomIds.length > 0) {
+            const studentsRef = collection(db, "students");
+            const studentsQuery = query(
+              studentsRef,
+              where("status", "==", "active"),
+              where("classroomId", "in", teacherClassroomIds),
+            );
+            studentsSnapshot = await getDocs(studentsQuery);
+          } else {
+            studentsSnapshot = { docs: [] };
+          }
+
+          // Get all read notifications
+          const notificationsRef = collection(db, "notification_teacher");
+          const readQuery = query(
+            notificationsRef,
+            where("teacherID", "==", auth.currentUser.uid),
+            where("status", "==", "read"),
+          );
+          const readSnapshot = await getDocs(readQuery);
+
+          const readNotifications = {};
+          readSnapshot.forEach((doc) => {
+            const data = doc.data();
+            const key = `${data.type}_${data.notificationID}`;
+            readNotifications[key] = true;
+          });
+
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
+          let unreadCount = 0;
+          calendarSnapshot.forEach((doc) => {
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
+            }
+          });
+
+          // Count unread student join notifications
+          studentsSnapshot.forEach((doc) => {
+            const key = `student_${doc.id}`;
+            if (!readNotifications[key]) {
+              unreadCount++;
+            }
+          });
+
+          // Update badge
+          const badge = document.getElementById("notification-badge");
+          if (badge) {
+            badge.textContent = unreadCount;
+            if (unreadCount === 0) {
+              badge.style.display = "none";
+            } else {
+              badge.style.display = "flex";
+            }
+          }
+        } catch (error) {
+          console.error("Error updating notification badge:", error);
+        }
+      }
+
+      // Initialize when user is authenticated
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          await updateNotificationBadge();
+        }
       });
     </script>
   </body>

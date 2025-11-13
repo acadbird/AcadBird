@@ -38,11 +38,7 @@
           class="middle-logo"
         />
         <div class="nav-icons">
-          <a
-            href="notification_teacher.html"
-            target="_blank"
-            class="notification-link"
-          >
+          <a href="notification_teacher.html" class="notification-link">
             <img
               src="../../main/img/Notification.png"
               alt="Notifications"
@@ -50,10 +46,10 @@
             />
             <span class="notification-badge" id="notification-badge">0</span>
           </a>
-          <a href="help_teacher.html" target="_blank">
+          <a href="help_teacher.html">
             <img src="../../main/img/Help.png" alt="Help" class="icon" />
           </a>
-          <a href="settings_teacher.html" target="_blank">
+          <a href="settings_teacher.html">
             <div class="account-menu">
               <img
                 src="../../main/img/account icon.png"
@@ -454,12 +450,22 @@
               Object.keys(readNotifications).length,
             );
 
-            // Count unread calendar notifications
+            // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+
             let unreadCount = 0;
             calendarSnapshot.forEach((doc) => {
-              const key = `calendar_${doc.id}`;
-              if (!readNotifications[key]) {
-                unreadCount++;
+              const eventData = doc.data();
+              const eventDate = new Date(eventData.date);
+              eventDate.setHours(0, 0, 0, 0);
+
+              // Only count if event is today or in the future
+              if (eventDate >= currentDate) {
+                const key = `calendar_${doc.id}`;
+                if (!readNotifications[key]) {
+                  unreadCount++;
+                }
               }
             });
             console.log("📆 Unread calendar notifications:", unreadCount);
@@ -483,7 +489,6 @@
             return 0;
           }
         }
-
         async function updateNotificationBadge() {
           try {
             const currentUser = auth.currentUser;

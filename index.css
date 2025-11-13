@@ -1,250 +1,249 @@
 /* HEADER */
 header {
-    background-color: #fff;
-    padding: 15px 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    position: fixed; /* stays at top */
-    width: 100%;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    box-sizing: border-box; 
-    font-family: 'Poppins', sans-serif;
+  background-color: #fff;
+  padding: 15px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: fixed; /* stays at top */
+  width: 100%;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
 }
 
-
 .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .logo {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
 }
 
 .logo img {
-    height: 40px;
-    display: block;
+  height: 40px;
+  display: block;
 }
 
 .main-nav ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 15px;
-    align-items: center;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 15px;
+  align-items: center;
 }
 
 .main-nav a {
-    text-decoration: none;
-    color: #333;
-    font-weight: bold;
-    transition: color 0.3s ease;
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+  transition: color 0.3s ease;
 }
 
 .main-nav a:hover {
-    color: #a46007;
+  color: #a46007;
 }
 
 .login-btn a {
-    background-color: #007bff;
-    color: #fff;
-    padding: 8px 16px;
-    border-radius: 5px;
+  background-color: #007bff;
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 5px;
 }
 
 .signup-btn a {
-    background-color: #FFC414; 
-    color: #000;
-    padding: 8px 16px;
-    border-radius: 5px;
+  background-color: #ffc414;
+  color: #000;
+  padding: 8px 16px;
+  border-radius: 5px;
 }
 
 body {
-    font-family: 'Poppins', sans-serif;
-    color: #333; /* optional: set a default text color */
+  font-family: "Poppins", sans-serif;
+  color: #333; /* optional: set a default text color */
 }
-
 
 /* HERO */
 .hero {
-    min-height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
 
-    background-image: 
-        radial-gradient(black 1px, transparent 1px),
-        linear-gradient(to bottom right, #F4F9FF, #D6E4F6);
-    background-size: 20px 20px, 100% 100%;
-    background-repeat: repeat, no-repeat;
+  background-image:
+    radial-gradient(black 1px, transparent 1px),
+    linear-gradient(to bottom right, #f4f9ff, #d6e4f6);
+  background-size:
+    20px 20px,
+    100% 100%;
+  background-repeat: repeat, no-repeat;
 }
 
 .hero-content {
-    max-width: 700px;
-    padding: 20px;
+  max-width: 700px;
+  padding: 20px;
 }
 
 .hero-content h1 {
-    font-size: 2.5rem;
-    color: #0A4084;
-    margin-bottom: 15px;
-    font-weight: 700;
+  font-size: 2.5rem;
+  color: #0a4084;
+  margin-bottom: 15px;
+  font-weight: 700;
 }
 
 .hero-content p {
-    font-size: 1.2rem;
-    color: #555;
-    margin-bottom: 30px;
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 30px;
 }
 
 .hero-btn {
-    display: inline-block;
-    background-color: #FFC414;
-    color: #000;
-    padding: 12px 28px;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    text-decoration: none;
-    transition: background 0.3s ease;
+  display: inline-block;
+  background-color: #ffc414;
+  color: #000;
+  padding: 12px 28px;
+  border-radius: 8px;
+  font-size: 1.1rem;
+  text-decoration: none;
+  transition: background 0.3s ease;
 }
 
 .hero-btn:hover {
-    background-color: #e6ac00;
+  background-color: #e6ac00;
 }
 
 /* ABOUT SECTION */
 .about-section {
-    background: white;
-    padding: 80px 40px;
+  background: white;
+  padding: 80px 40px;
 }
 
 .about-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    max-width: 1100px;
-    margin: 0 auto;
-    gap: 50px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 50px;
 }
 
-.about-text, .about-benefits {
-    flex: 1;
+.about-text,
+.about-benefits {
+  flex: 1;
 }
 
 .about-title {
-    font-size: 2rem;
-    margin-bottom: 20px;
-    color: #0A4084;
+  font-size: 2rem;
+  margin-bottom: 20px;
+  color: #0a4084;
 }
 
 .about-text p {
-    font-size: 1.1rem;
-    color: #555;
-    line-height: 1.6;
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.6;
 }
 
 .about-benefits ul {
-    list-style-type: disc;
-    padding-left: 20px;
-    color: #555;
-    font-size: 1.1rem;
-    line-height: 1.8;
+  list-style-type: disc;
+  padding-left: 20px;
+  color: #555;
+  font-size: 1.1rem;
+  line-height: 1.8;
 }
 
-
 .blue-section {
-    background-color: #0A4084;
-    color: white;
-    padding: 60px 20px;
-    text-align: center;
+  background-color: #0a4084;
+  color: white;
+  padding: 60px 20px;
+  text-align: center;
 }
 
 .blue-container {
-    display: flex;
-    justify-content: space-around;
-    gap: 40px;
-    max-width: 1200px;
-    margin: 0 auto;
-    flex-wrap: wrap; /* makes it responsive */
+  display: flex;
+  justify-content: space-around;
+  gap: 40px;
+  max-width: 1200px;
+  margin: 0 auto;
+  flex-wrap: wrap; /* makes it responsive */
 }
 
 .blue-column {
-    flex: 1;
-    min-width: 250px;
-    max-width: 350px;
+  flex: 1;
+  min-width: 250px;
+  max-width: 350px;
 }
 
 .blue-column h3 {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
-    font-weight: 600;
+  font-size: 1.5rem;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .blue-column p {
-    font-size: 1rem;
-    line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-
 .footer {
-    background-color: white;
-    color: #0A4084;
-    padding: 50px 20px 20px;
-    font-family: 'Poppins', sans-serif;
+  background-color: white;
+  color: #0a4084;
+  padding: 50px 20px 20px;
+  font-family: "Poppins", sans-serif;
 }
 
 .footer-container {
-    max-width: 1200px;
-    margin: 0 auto;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .footer-columns {
-    display: flex;
-    gap: 60px; /* space between Get in Touch and Other Links */
-    align-items: flex-start;
+  display: flex;
+  gap: 60px; /* space between Get in Touch and Other Links */
+  align-items: flex-start;
 }
 
 .footer-column h3 {
-    font-size: 1.3rem;
-    margin-bottom: 15px;
-    font-weight: 600;
+  font-size: 1.3rem;
+  margin-bottom: 15px;
+  font-weight: 600;
 }
 
 .footer-column p,
 .footer-column a {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #0A4084;
-    text-decoration: none;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #0a4084;
+  text-decoration: none;
 }
 
 .footer-column ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .footer-column li {
-    margin-bottom: 8px;
+  margin-bottom: 8px;
 }
 
 .footer-column a:hover {
-    text-decoration: underline;
+  text-decoration: underline;
 }
 
 .footer-bottom {
-    text-align: center;
-    margin-top: 30px;
-    border-top: 1px solid #ddd;
-    padding-top: 15px;
-    font-size: 0.9rem;
+  text-align: center;
+  margin-top: 30px;
+  border-top: 1px solid #ddd;
+  padding-top: 15px;
+  font-size: 0.9rem;
 }
 
 /* Modal Background */
@@ -256,7 +255,7 @@ body {
   top: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   justify-content: center;
   align-items: center;
 }
@@ -270,7 +269,7 @@ body {
   position: relative;
   width: 350px;
   max-width: 90%;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
 }
 
 /* Close Button */
@@ -301,7 +300,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
   transition: transform 0.2s ease;
 }
 
@@ -316,11 +315,11 @@ body {
 
 /* Specific Colors */
 .option.parent {
-  background-color: #FFC414;
+  background-color: #ffc414;
 }
 
 .option.teacher {
-  background-color: #A8E6CF;
+  background-color: #a8e6cf;
 }
 
 /* === Sign Up Dropdown === */
@@ -350,7 +349,7 @@ body {
   left: 0;
   background-color: white;
   border-radius: 8px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   z-index: 999;
   flex-direction: column;
   min-width: 150px;

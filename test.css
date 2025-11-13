@@ -18,15 +18,17 @@ body::before {
 
   /* Two layers of logos to create the staggered effect */
   background-image:
-    url("img/sunhill.png"), /* The first layer of logos */
-   url("img/sunhill.png"); /* The second layer of logos */
-    
+    url("img/sunhill.png"),
+    /* The first layer of logos */ url("img/sunhill.png"); /* The second layer of logos */
+
   background-repeat: repeat, repeat; /* This is the fix! */
   background-size: 150px auto; /* Each logo is 150px wide, height is automatic */
-   
+
   /* Positions the two layers to create the brick pattern */
-  background-position: 0 0, 75px 50px;
-  
+  background-position:
+    0 0,
+    75px 50px;
+
   opacity: 0.2; /* transparency */
   z-index: -1;
 }
