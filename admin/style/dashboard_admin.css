@@ -280,7 +280,7 @@ body {
             Main Content
         ======================= */
 .main-content {
-  padding: 35px 45px;
+  padding: 25px 35px;
   background-color: transparent;
   position: relative;
   z-index: 0;
@@ -289,144 +289,239 @@ body {
   /* Updated to a single-column layout for small/medium, and use grid for large */
   display: grid;
   grid-template-columns: 1fr;
-  gap: 30px;
+  gap: 25px;
+  align-items: start;
 }
 
 /* New layout structure for large screens (lg: 1024px+) */
 @media (min-width: 1024px) {
   .main-content {
-    grid-template-columns: 1fr 3fr; /* 1/4 (sidebar) and 3/4 (dashboard area) */
-    align-items: flex-start;
+    grid-template-columns: 280px 1fr; /* Fixed sidebar width and flexible main area */
+    align-items: start;
+    gap: 30px;
   }
 }
 
 .left-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Simulating gap-6 */
+  gap: 15px;
+  width: 80%;
+  max-width: 200px;
+  margin: 0 auto;
 }
 
 .right-panel {
   display: flex;
   flex-direction: column;
-  gap: 24px; /* Simulating gap-6 */
+  gap: 10px;
+  width: 100%;
 }
 
-@media (max-width: 1024px) {
-  .main-content {
-    padding: 20px;
-  }
+/* Admin Card - make it match metric card width */
+.admin-card {
+  background-color: #0a3b82;
+  color: white;
+  padding: 20px 15px !important;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #000;
+  height: fit-content;
+  width: 100% !important;
+  max-width: 240px !important;
+  margin: 0 auto !important;
+  text-align: center;
 }
 
-/* New Grid for Dashboard Visualizations (Top Row) */
+.admin-card h2 {
+  font-size: 16px !important;
+  font-weight: 600;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 8px;
+  text-align: center;
+}
+
+.admin-card span {
+  font-weight: 500;
+  font-size: 12px !important;
+  display: block;
+  text-align: center;
+}
+
+/* Metric Styles - updated for symmetry */
+.metric-title {
+  font-size: 14px !important;
+  font-weight: 600;
+  color: #4b5563;
+  text-align: center;
+  margin-bottom: 8px !important;
+  width: 100%;
+}
+
+.metric-card {
+  padding: 12px 8px !important;
+  min-height: 70px !important;
+  height: auto !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  color: white;
+  font-weight: 700;
+  border: 1px solid #000;
+  transition: all 0.3s ease;
+  width: 100% !important;
+  max-width: 150px !important;
+  margin: 0 auto !important;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.metric-card p:first-child {
+  font-size: 20px !important;
+  font-weight: 700;
+  margin-bottom: 4px !important;
+  line-height: 1;
+}
+
+.metric-card p:last-child {
+  font-size: 11px !important;
+  margin-bottom: 0 !important;
+  letter-spacing: 0.03em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+/* Metric card colors */
+.metric-card-green {
+  background-color: #34d399;
+}
+.metric-card-green:hover {
+  background-color: #059669 !important;
+}
+
+.metric-card-blue {
+  background-color: #60a5fa;
+}
+.metric-card-blue:hover {
+  background-color: #1d4ed8 !important;
+}
+
+.metric-card-orange {
+  background-color: #fbbf24;
+}
+.metric-card-orange:hover {
+  background-color: #c89b0a !important;
+}
+
+/* Hover effects */
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Right panel grid adjustments */
 .visualizations-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
   .visualizations-grid {
-    grid-template-columns: repeat(
-      2,
-      1fr
-    ); /* Two columns on medium screens and up */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 25px;
   }
 }
 
-/* New Grid for Bottom Row */
 .bottom-row-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 24px;
+  gap: 20px;
 }
 
 @media (min-width: 768px) {
   .bottom-row-grid {
-    grid-template-columns: 2fr 1fr; /* Two-thirds / One-third layout for active classes and resources */
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
   }
 }
 
-/* Card Styles */
+/* Card consistency in right panel */
+.user-pie-chart-card,
+.logs-bar-chart-card,
+.active-classes-card,
+.resources-card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #000;
+  height: fit-content;
+}
+
+/* Calendar widget adjustment */
+.calendar-widget {
+  background-color: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid #000;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .main-content {
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .left-panel {
+    max-width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+  }
+  
+  .admin-card {
+    max-width: 100%;
+    grid-column: 1 / -1;
+  }
+  
+  .metric-title {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 15px;
+    gap: 15px;
+  }
+  
+  .visualizations-grid,
+  .bottom-row-grid {
+    gap: 15px;
+  }
+  
+  .user-pie-chart-card,
+  .logs-bar-chart-card,
+  .active-classes-card,
+  .resources-card,
+  .calendar-widget {
+    padding: 15px;
+  }
+}
+
+/* Ensure all cards have consistent spacing */
 .card {
-  padding: 24px; /* p-6 */
-  border-radius: 12px; /* rounded-xl */
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1); /* shadow-lg */
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   border: 1px solid #000;
-  height: fit-content; /* Ensure height fits content */
-}
-
-.admin-card {
-  background-color: #0a3b82; /* acad-navy */
-  color: white; /* text-white */
-}
-
-.admin-card h2 {
-  font-size: 1.25rem; /* text-xl */
-  font-weight: 600; /* font-semibold */
-  margin-bottom: 16px; /* mb-4 */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2); /* border-b border-white/20 */
-  padding-bottom: 8px; /* pb-2 */
-}
-
-.admin-card span {
-  font-weight: 500; /* font-medium */
-  font-size: 1.125rem; /* text-lg */
-  padding: 8px 12px; /* py-2 px-3 */
-  display: block;
-}
-
-/* Metric Styles */
-.metric-title {
-  font-size: 1.125rem; /* text-lg */
-  font-weight: 600; /* font-semibold */
-  color: #4b5563; /* text-gray-700 */
-}
-
-.metric-card {
-  padding: 16px; /* p-4 */
-  border-radius: 12px; /* rounded-xl */
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1); /* shadow-lg */
-  text-align: center;
-  color: white;
-  font-weight: 700; /* font-bold */
-  border: 1px solid #000;
-  transition: background-color 0.15s;
-}
-
-.metric-card-green {
-  background-color: #34d399; /* metric-green */
-}
-.metric-card-green:hover {
-  background-color: #34d399e5; /* metric-green/90 */
-}
-
-.metric-card-blue {
-  background-color: #60a5fa; /* metric-blue */
-}
-.metric-card-blue:hover {
-  background-color: #60a5fae5; /* metric-blue/90 */
-}
-
-.metric-card-orange {
-  background-color: #fbbf24; /* metric-orange */
-}
-.metric-card-orange:hover {
-  background-color: #fbbf24e5; /* metric-orange/90 */
-}
-
-.metric-card p:first-child {
-  font-size: 2.25rem; /* text-4xl */
-}
-
-.metric-card p:last-child {
-  font-size: 0.875rem; /* text-sm */
-  text-transform: uppercase;
-  letter-spacing: 0.05em; /* tracking-wider */
+  height: fit-content;
 }
 
 .login-trend-card {
