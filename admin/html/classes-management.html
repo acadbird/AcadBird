@@ -15,31 +15,35 @@
     <link rel="stylesheet" href="../style/classes-management.css" />
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-      // Customizing Tailwind to match the AcadBird color scheme and font
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              "acad-navy": "#0a3b82",
-              "acad-light-bg": "#dbe7f7",
-              "acad-header-bg": "#e7efff",
-              "admin-panel": "#072e5e",
-              "class-card": "#ffc107",
-              "metric-green": "#34d399",
-              "metric-blue": "#60a5fa",
-              "metric-orange": "#fbbf24",
-              "report-pending": "#fbbf24",
-              "report-resolve": "#4ade80",
-              "status-active": "#34d399",
-              "status-archived": "#ef4444",
-              "status-pending": "#fbbf24",
+      // Wait for Tailwind to be fully loaded
+      document.addEventListener("DOMContentLoaded", function () {
+        if (typeof tailwind !== "undefined") {
+          tailwind.config = {
+            theme: {
+              extend: {
+                colors: {
+                  "acad-navy": "#0a3b82",
+                  "acad-light-bg": "#dbe7f7",
+                  "acad-header-bg": "#e7efff",
+                  "admin-panel": "#072e5e",
+                  "class-card": "#ffc107",
+                  "metric-green": "#34d399",
+                  "metric-blue": "#60a5fa",
+                  "metric-orange": "#fbbf24",
+                  "report-pending": "#fbbf24",
+                  "report-resolve": "#4ade80",
+                  "status-active": "#34d399",
+                  "status-archived": "#ef4444",
+                  "status-pending": "#fbbf24",
+                },
+                fontFamily: {
+                  sans: ["Poppins", "sans-serif"],
+                },
+              },
             },
-            fontFamily: {
-              sans: ["Poppins", "sans-serif"],
-            },
-          },
-        },
-      };
+          };
+        }
+      });
     </script>
 
     <style>
@@ -64,7 +68,7 @@
               src="../../main/img/AcadBird - White Text.png"
               class="logo-text-img"
               alt="AcadBird Text"
-            />
+            />Admin
           </div>
           <img
             src="../../main/img/sunhill.png"
@@ -117,6 +121,9 @@
             >
             <a href="teacher-management.html" class="nav-item"
               >Teacher Management</a
+            >
+            <a href="parent-management.html" class="nav-item"
+              >Parent Management</a
             >
             <a href="calendar.html" class="nav-item">Calendar</a>
             <a href="settings_admin.html" class="nav-item">Settings</a>

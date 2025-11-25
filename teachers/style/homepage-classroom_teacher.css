@@ -156,22 +156,182 @@ body {
   margin-bottom: 10px;
 }
 /* Calendar day styling */
+/* ===== Calendar card ===== */
+.calendar-card {
+  flex: 1 1 50%;
+  background-color: #ffffff;
+  border-radius: 30px; /* Reduced from 50px */
+  border: 3px solid #000; /* Reduced from 5px */
+  min-height: 80px; /* Reduced from 130px */
+  position: relative;
+  padding: 15px 20px; /* Reduced from 25px 30px */
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.badge {
+  position: absolute;
+  top: 8px; /* Reduced from 12px */
+  left: 8px; /* Reduced from 12px */
+  background-color: #fbbc05;
+  color: #000;
+  border-radius: 6px; /* Reduced from 8px */
+  padding: 3px 8px; /* Reduced from 5px 10px */
+  font-size: 13px; /* Reduced from 15px */
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Calendar Header Styles */
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px; /* Reduced from 10px */
+  font-size: 16px; /* Reduced from 18px */
+  font-weight: 600;
+  margin-bottom: 10px; /* Reduced from 15px */
+}
+
+.calendar-year,
+.calendar-month {
+  font-weight: 700;
+}
+
+.nav-arrow {
+  font-size: 14px; /* Reduced from 16px */
+  color: #000;
+  text-decoration: none;
+}
+
+.nav-arrow i {
+  padding: 6px; /* Reduced from 8px */
+  background-color: #e9ecef;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Calendar Grid Styles */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px; /* Reduced from 10px */
+  text-align: center;
+  font-weight: 600;
+  flex-grow: 1;
+}
+
+.day-name {
+  font-weight: 700;
+  color: #0a3b82;
+  padding: 3px 0; /* Reduced from 5px 0 */
+  font-size: 14px; /* Added smaller font */
+}
+
+.day {
+  padding: 6px 0; /* Reduced from 8px 0 */
+  border-radius: 6px; /* Reduced from 8px */
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px; /* Added smaller font */
+  min-height: 30px; /* Added fixed height */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.day.current-day {
+  border: 2px solid #0a3b82;
+  font-weight: 700;
+}
+
+.day.disabled {
+  opacity: 0.5;
+  background-color: #e9ecef;
+  cursor: not-allowed;
+}
+
+/* Calendar Legends */
+.calendar-legends {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px; /* Reduced from 15px */
+  margin-top: 15px; /* Reduced from 20px */
+  padding-top: 10px; /* Reduced from 15px */
+  border-top: 1px solid #e0e0e0;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 12px; /* Reduced from 13px */
+  font-weight: 500;
+  color: #333;
+}
+
+.legend-color {
+  width: 14px; /* Reduced from 16px */
+  height: 14px; /* Reduced from 16px */
+  border-radius: 3px; /* Reduced from 4px */
+  margin-right: 6px; /* Reduced from 8px */
+  border: 1px solid #ccc;
+}
+
+/* Event indicators in calendar */
+.event-indicators {
+  display: flex;
+  gap: 1px; /* Reduced from 2px */
+  justify-content: center;
+  margin-top: 1px; /* Reduced from 2px */
+  flex-wrap: wrap;
+}
+
+.event-indicator {
+  width: 4px; /* Reduced from 6px */
+  height: 4px; /* Reduced from 6px */
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+/* Event count badge */
+.event-count-badge {
+  position: absolute;
+  top: 1px; /* Reduced from 2px */
+  right: 1px; /* Reduced from 2px */
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  width: 14px; /* Reduced from 18px */
+  height: 14px; /* Reduced from 18px */
+  font-size: 8px; /* Reduced from 10px */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+/* Calendar day styling */
 .calendar-day {
   position: relative;
-  padding: 8px;
+  padding: 4px; /* Reduced from 8px */
   text-align: center;
-  border-radius: 8px;
+  border-radius: 6px; /* Reduced from 8px */
   transition: all 0.2s ease;
-  min-height: 40px;
+  min-height: 30px; /* Reduced from 40px */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-size: 14px; /* Added smaller font */
 }
 
 .calendar-day:hover {
-  transform: scale(1.05);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transform: scale(1.03); /* Reduced from 1.05 */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.15); /* Reduced shadow */
 }
 
 /* Today styling */
@@ -179,23 +339,6 @@ body {
   border: 2px solid #333;
   font-weight: bold;
 }
-
-/* Event count badge */
-.event-count-badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-
 /* Modal event items */
 .modal-event-item {
   background: #f8f9fa;
@@ -224,124 +367,9 @@ body {
 .deadline {
   background-color: #54a0ff !important;
 }
-/* ===== Calendar card ===== */
-.calendar-card {
-  flex: 1 1 70%;
-  background-color: #ffffff;
-  border-radius: 50px;
-  border: 5px solid #000;
-  min-height: 130px;
-  position: relative;
-  padding: 25px 30px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-}
 
-.badge {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  background-color: #fbbc05;
-  color: #000;
-  border-radius: 8px;
-  padding: 5px 10px;
-  font-size: 15px;
-  font-weight: 600;
-  text-align: center;
-}
 
-/* Calendar Header Styles */
-.calendar-header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  font-size: 18px;
-  font-weight: 600;
-  margin-bottom: 15px;
-}
 
-.calendar-year,
-.calendar-month {
-  font-weight: 700;
-}
-
-.nav-arrow {
-  font-size: 16px;
-  color: #000;
-  text-decoration: none;
-}
-
-.nav-arrow i {
-  padding: 8px;
-  background-color: #e9ecef;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-/* Calendar Grid Styles */
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  text-align: center;
-  font-weight: 600;
-  flex-grow: 1;
-}
-
-.day-name {
-  font-weight: 700;
-  color: #0a3b82;
-  padding: 5px 0;
-}
-
-.day {
-  padding: 8px 0;
-  border-radius: 8px;
-  background-color: #f8f9fa;
-  border: 1px solid #dee2e6;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.day.current-day {
-  border: 2px solid #0a3b82;
-  font-weight: 700;
-}
-
-.day.disabled {
-  opacity: 0.5;
-  background-color: #e9ecef;
-  cursor: not-allowed;
-}
-
-/* Calendar Legends */
-.calendar-legends {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
-  padding-top: 15px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-}
-
-.legend-color {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  margin-right: 8px;
-  border: 1px solid #ccc;
-}
 
 .exam-day {
   background-color: #ffccbc;

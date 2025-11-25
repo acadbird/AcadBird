@@ -48,6 +48,23 @@
         background-color: #dbe7f7;
         color: #000;
       }
+      /* Add this to your existing CSS */
+      #parentDropdown {
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      #parentDropdown div {
+        transition: background-color 0.2s;
+      }
+
+      #parentDropdown div:hover {
+        background-color: #f3f4f6;
+      }
+
+      #parentSearchContainer {
+        z-index: 1001;
+      }
 
       /* Navbar & Header */
       .navbar {
@@ -312,7 +329,7 @@
               src="../../main/img/AcadBird - White Text.png"
               class="h-[28px]"
               alt="AcadBird Text"
-            />
+            />Admin
           </div>
           <img
             src="../../main/img/sunhill.png"
@@ -354,6 +371,9 @@
             >
             <a href="teacher-management.html" class="nav-item"
               >Teacher Management</a
+            >
+            <a href="parent-management.html" class="nav-item"
+              >Parent Management</a
             >
             <a href="calendar.html" class="nav-item">Calendar</a>
             <a href="settings_admin.html" class="nav-item">Settings</a>
@@ -767,6 +787,7 @@
 
       // Fetch parents for searchable dropdown
       // Fetch parents for searchable dropdown
+      // Fetch parents for searchable dropdown - IMPROVED VERSION
       async function fetchParents(searchTerm = "") {
         try {
           const parentsQuery = query(
@@ -786,7 +807,8 @@
             if (
               !searchTerm ||
               parentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-              parentEmail.toLowerCase().includes(searchTerm.toLowerCase())
+              parentEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              (data.phoneNumber && data.phoneNumber.includes(searchTerm))
             ) {
               parents.push({
                 id: docSnap.id,
@@ -797,13 +819,15 @@
             }
           });
 
+          // Sort alphabetically by name
+          parents.sort((a, b) => a.name.localeCompare(b.name));
+
           return parents;
         } catch (error) {
           console.error("Error fetching parents:", error);
           return [];
         }
       }
-
       // Global class data object - initialize as null
       let classData = null;
 
@@ -945,37 +969,43 @@
         const selectedParentInfo =
           document.getElementById("selectedParentInfo");
 
-        const parents = await fetchParents(searchTerm);
+        try {
+          const parents = await fetchParents(searchTerm);
 
-        parentDropdown.innerHTML = "";
+          parentDropdown.innerHTML = "";
 
-        if (parents.length === 0) {
-          const noResult = document.createElement("div");
-          noResult.className = "p-2 text-gray-500 text-sm";
-          noResult.textContent = "No parents found";
-          parentDropdown.appendChild(noResult);
-        } else {
-          parents.forEach((parent) => {
-            const parentOption = document.createElement("div");
-            parentOption.className =
-              "p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200";
-            parentOption.innerHTML = `
-        <div class="font-medium">${parent.name}</div>
-        <div class="text-xs text-gray-500">${parent.email} • ${parent.phone}</div>
-      `;
-            parentOption.addEventListener("click", () => {
-              parentSearchInput.value = parent.name;
-              selectedParentId.value = parent.id;
-              selectedParentInfo.innerHTML = `
-          <div class="text-sm">
-            <strong>Selected:</strong> ${parent.name} 
-            <br><span class="text-xs text-gray-600">${parent.email}</span>
-          </div>
+          if (parents.length === 0) {
+            const noResult = document.createElement("div");
+            noResult.className = "p-2 text-gray-500 text-sm";
+            noResult.textContent = "No parents found";
+            parentDropdown.appendChild(noResult);
+          } else {
+            parents.forEach((parent) => {
+              const parentOption = document.createElement("div");
+              parentOption.className =
+                "p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200";
+              parentOption.innerHTML = `
+          <div class="font-medium">${parent.name}</div>
+          <div class="text-xs text-gray-500">${parent.email} • ${parent.phone}</div>
         `;
-              parentDropdown.classList.add("hidden");
+              parentOption.addEventListener("click", () => {
+                parentSearchInput.value = parent.name;
+                selectedParentId.value = parent.id;
+                selectedParentInfo.innerHTML = `
+            <div class="text-sm">
+              <strong>Selected:</strong> ${parent.name} 
+              <br><span class="text-xs text-gray-600">${parent.email}</span>
+            </div>
+          `;
+                parentDropdown.classList.add("hidden");
+              });
+              parentDropdown.appendChild(parentOption);
             });
-            parentDropdown.appendChild(parentOption);
-          });
+          }
+        } catch (error) {
+          console.error("Error populating parent search:", error);
+          parentDropdown.innerHTML =
+            '<div class="p-2 text-red-500 text-sm">Error loading parents</div>';
         }
       }
 
@@ -1003,12 +1033,15 @@
       }
 
       // Add new student to Firestore
+
+      // Add new student to Firestore
       async function addStudentToFirestore(studentData) {
         try {
           await addDoc(collection(db, "students"), {
             ...studentData,
             classroomId: classData.id,
             fullName: `${studentData.firstName} ${studentData.lastName}`,
+            status: "active", // Default status set to active
             createdAt: serverTimestamp(),
           });
           return true;
@@ -1118,21 +1151,23 @@
 
         parentSearchInput.addEventListener("input", async (e) => {
           const searchTerm = e.target.value;
+
+          // Clear any previous selection when user starts typing
+          if (searchTerm.length > 0) {
+            document.getElementById("selectedParentId").value = "";
+            document.getElementById("selectedParentInfo").innerHTML = "";
+          }
+
           if (searchTerm.length >= 2) {
-            showLoading(); // ADD THIS LINE
             await populateParentSearch(searchTerm);
             parentDropdown.classList.remove("hidden");
-            hideLoading(); // ADD THIS LINE
           } else if (searchTerm.length === 0) {
-            showLoading(); // ADD THIS LINE
             await populateParentSearch("");
             parentDropdown.classList.remove("hidden");
-            hideLoading(); // ADD THIS LINE
           } else {
             parentDropdown.classList.add("hidden");
           }
         });
-
         // Close parent dropdown when clicking outside
         document.addEventListener("click", (e) => {
           if (!e.target.closest("#parentSearchContainer")) {

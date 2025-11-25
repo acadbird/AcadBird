@@ -27,7 +27,7 @@
             src="../../main/img/AcadBird - White Text.png"
             class="logo-text-img"
             alt="AcadBird Text"
-          />
+          />Teacher
         </div>
         <img
           src="../../main/img/sunhill.png"
@@ -56,9 +56,10 @@
           <a href="homepage-classroom_teacher.html" class="nav-item"
             >Classroom</a
           >
-          <a href="activitylog_teacher.html" class="nav-item active"
-            >Activity Logs</a
+          <a href="participationoverview_teacher.html" class="nav-item active"
+            >Performance Log</a
           >
+          <a href="activitylog_teacher.html" class="nav-item">Announcements</a>
           <a href="resources_teacher.html" class="nav-item">Resources</a>
           <a href="messages_teacher.html" class="nav-item">Messages</a>
           <a href="studentlistpage_teacher.html" class="nav-item"
@@ -116,7 +117,6 @@
             </div>
             <div class="week-info">
               <span class="week-icon">📚</span>
-
               <span class="date-icon">🗓️</span>
             </div>
           </div>
@@ -184,7 +184,6 @@
                   <td></td>
                 </tr>
               </thead>
-
               <tbody></tbody>
             </table>
             <div class="modal-actions">
@@ -253,6 +252,83 @@
       </div>
     </div>
 
+    <div class="modal-overlay hidden" id="editActivityModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Edit Activity</h2>
+          <button class="close-modal-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="editActivityForm">
+            <div class="form-group">
+              <label for="edit-activity-title">Activity Title:</label>
+              <input
+                type="text"
+                id="edit-activity-title"
+                placeholder="e.g., Identifying the colors of the flag"
+              />
+            </div>
+            <p class="participation-label">Participation:</p>
+            <table class="participation-table" id="editActivityTable">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Full</th>
+                  <th>Partial</th>
+                  <th>None</th>
+                  <th>Note</th>
+                  <th>Action</th>
+                </tr>
+                <tr>
+                  <th>
+                    <label
+                      ><input type="checkbox" id="editSelectAllCheckbox" />
+                      Select All</label
+                    >
+                  </th>
+                  <td>
+                    <input type="radio" name="edit-select-all" value="full" />
+                  </td>
+                  <td>
+                    <input
+                      type="radio"
+                      name="edit-select-all"
+                      value="partial"
+                    />
+                  </td>
+                  <td>
+                    <input type="radio" name="edit-select-all" value="none" />
+                  </td>
+                  <td></td>
+                  <td></td>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+            <div class="modal-actions">
+              <button
+                class="action-btn log-participation-btn"
+                id="updateActivityBtn"
+              >
+                Update Activity
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="confirmation-modal hidden" id="deleteConfirmationModal">
+      <div class="confirmation-content">
+        <h3 id="confirmationTitle">Confirm Deletion</h3>
+        <p id="confirmationMessage">Are you sure you want to delete this?</p>
+        <div class="confirmation-actions">
+          <button class="confirm-btn" id="confirmDeleteBtn">Delete</button>
+          <button class="cancel-btn" id="cancelDeleteBtn">Cancel</button>
+        </div>
+      </div>
+    </div>
+
     <div class="modal-overlay hidden" id="noteModal">
       <div class="modal-content">
         <div class="modal-header">
@@ -274,6 +350,9 @@
         query,
         where,
         addDoc,
+        updateDoc,
+        deleteDoc,
+        doc,
       } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
       import {
         getAuth,
@@ -291,8 +370,11 @@
       let activitiesData = [];
       let studentParticipationScores = [];
       const loadingOverlay = document.getElementById("loading-overlay");
-      const PARTICIPATION_POINTS = { full: 15, partial: 5, none: 0 };
       const COLOR_MAP = { high: "#79de87", medium: "#ffc107", low: "#ff5757" };
+
+      let currentEditingActivity = null;
+      let currentDeletingItem = null;
+      let activityDocuments = {};
 
       onAuthStateChanged(auth, async (user) => {
         if (!user) return console.log("No user signed in.");
@@ -304,27 +386,19 @@
           await fetchStudentsFromFirestore();
           await fetchActivitiesFromFirestore();
           generateWeeks();
-
-          // Render everything after data is ready
-          const participationChart =
-            document.getElementById("participationChart");
-          const activityCardsContainer = document.getElementById(
-            "activityCardsContainer",
-          );
-
           renderAll();
 
-          // Populate add activity table
           const addActivityTableBody = document.querySelector(
             "#addActivityTable tbody",
           );
           populateStudentTables(addActivityTableBody);
 
-          // Populate quick log table
           const quickLogTableBody = document.querySelector(
             "#quickLogTable tbody",
           );
           populateStudentTables(quickLogTableBody);
+
+          initializeEditDeleteListeners();
         } catch (err) {
           console.error("Error loading data:", err);
         } finally {
@@ -352,20 +426,18 @@
             };
           });
 
-          // Sort alphabetically
           STUDENTS.sort((a, b) => a.fullName.localeCompare(b.fullName));
         } catch (err) {
           console.error("Error fetching students:", err);
         }
       }
 
-      let weeksData = []; // array of { weekLabel: 'Week 1: ...', start: Date, end: Date }
+      let weeksData = [];
 
       function generateWeeks() {
         if (!activitiesData.length) return;
 
-        // Get min and max dates
-        const dates = activitiesData.map((a) => a.created_at.toDate()); // Firestore Timestamp -> JS Date
+        const dates = activitiesData.map((a) => a.created_at.toDate());
         const minDate = new Date(Math.min(...dates));
         const maxDate = new Date(Math.max(...dates));
 
@@ -376,7 +448,7 @@
         let weekNum = 1;
         while (currentStart <= maxDate) {
           const currentEnd = new Date(currentStart);
-          currentEnd.setDate(currentEnd.getDate() + 6); // 7-day week
+          currentEnd.setDate(currentEnd.getDate() + 6);
 
           weeksData.push({
             weekLabel: `Week ${weekNum}: ${currentStart.toLocaleDateString()} - ${currentEnd.toLocaleDateString()}`,
@@ -395,18 +467,17 @@
 
       function updateWeekInfo(selectedWeek) {
         if (!selectedWeek.start || !selectedWeek.end) {
-          // All Weeks
           weekInfoContainer.innerHTML = `
             <span class="week-icon">📚</span>
             <p><strong>${selectedWeek.weekLabel}</strong></p>
-        `;
+          `;
         } else {
           weekInfoContainer.innerHTML = `
             <span class="week-icon">📚</span>
             <p><strong>${selectedWeek.weekLabel}</strong></p>
             <span class="date-icon">🗓️</span>
             <p>${selectedWeek.start.toLocaleDateString()} – ${selectedWeek.end.toLocaleDateString()}</p>
-        `;
+          `;
         }
       }
 
@@ -414,13 +485,10 @@
         studentParticipationScores = calculateScores(activitiesData);
       }
 
-      const weekDropdown = document.querySelector(".dropdown-toggle");
-
       function populateWeekDropdown() {
         const menu = document.querySelector(".dropdown-menu");
         if (!weeksData.length) return;
 
-        // Include "All Weeks" as the first option
         const allWeeksOption = `<div class="dropdown-item" data-idx="-1">All Weeks</div>`;
 
         menu.innerHTML =
@@ -432,15 +500,12 @@
             )
             .join("");
 
-        // Set default toggle to All Weeks
         const dropdownToggle = document.querySelector(".dropdown-toggle");
         dropdownToggle.innerHTML = `All Weeks <i class="fas fa-chevron-down"></i>`;
 
-        // Show all activities by default
         renderActivityCards(activitiesData);
         updateWeekInfo({ weekLabel: "All Weeks", start: null, end: null });
 
-        // Click listeners for dropdown
         menu.querySelectorAll(".dropdown-item").forEach((item) => {
           item.addEventListener("click", (e) => {
             const idx = parseInt(e.target.dataset.idx);
@@ -485,8 +550,18 @@
           );
           const snapshot = await getDocs(q);
 
+          activityDocuments = {};
           const rawActivities = snapshot.docs.map((doc) => {
             const data = doc.data();
+
+            if (!activityDocuments[data.activityNo]) {
+              activityDocuments[data.activityNo] = [];
+            }
+            activityDocuments[data.activityNo].push({
+              docId: doc.id,
+              studentID: data.studentID,
+            });
+
             return {
               activityNumber: data.activityNo,
               description: data.activityName,
@@ -496,7 +571,7 @@
                   note: data.note || "",
                 },
               },
-              created_at: data.created_at, // <-- add this
+              created_at: data.created_at,
             };
           });
 
@@ -517,26 +592,16 @@
           console.error("Error fetching activities:", err);
         }
       }
+
       function showLoading() {
         loadingOverlay.style.display = "flex";
       }
 
-      // Hide overlay
       function hideLoading() {
         loadingOverlay.style.display = "none";
       }
 
-      function filterActivitiesByWeek(startDate, endDate) {
-        const filtered = activitiesData.filter((a) => {
-          const createdDate = a.created_at.toDate(); // Firestore timestamp -> JS Date
-          return createdDate >= startDate && createdDate <= endDate;
-        });
-
-        renderActivityCards(filtered);
-      }
-
       function calculateScores(filteredActivities) {
-        //KNN - Neighbor Average computation
         return STUDENTS.map((student) => {
           let totalScore = 0;
           let count = 0;
@@ -569,6 +634,8 @@
       const renderParticipationChart = (
         scores = studentParticipationScores,
       ) => {
+        const participationChart =
+          document.getElementById("participationChart");
         if (!participationChart) return;
         participationChart.innerHTML = "";
 
@@ -593,7 +660,6 @@
 
             const scoreDisplay = document.createElement("span");
             scoreDisplay.textContent = student.score.toFixed(0) + "%";
-
             scoreDisplay.style.position = "absolute";
             scoreDisplay.style.right = "5px";
 
@@ -607,8 +673,12 @@
       };
 
       const renderActivityCards = (data = activitiesData) => {
+        const activityCardsContainer = document.getElementById(
+          "activityCardsContainer",
+        );
         if (!activityCardsContainer) return;
         activityCardsContainer.innerHTML = "";
+
         data
           .slice()
           .reverse()
@@ -618,7 +688,7 @@
             const rowsHtml = Object.keys(act.participants)
               .map((id) => {
                 const student = STUDENTS.find((s) => s.id === id);
-                if (!student) return ""; // skip if student is not in this classroom
+                if (!student) return "";
                 const participant = act.participants[id];
                 const level =
                   typeof participant === "object"
@@ -630,15 +700,35 @@
             <td>${student.fullName}</td>
             <td style="text-align:center;"><div class="participation-dot dot-${level}"></div></td>
             <td><i class="fas fa-eye view-note" data-note="${note}" title="View Note"></i></td>
-        </tr>`;
+          </tr>`;
               })
               .join("");
 
-            card.innerHTML = `<div class="activity-card-header"><p>Activity ${act.activityNumber}</p><p>${act.description}</p></div><table class="activity-table"><thead><tr><th>Name</th><th>Participation Level</th><th>Note</th></tr></thead><tbody>${rowsHtml}</tbody></table>`;
+            card.innerHTML = `
+        <div class="activity-card-header">
+          <p>Activity ${act.activityNumber}</p>
+          <p>${act.description}</p>
+        </div>
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Participation Level</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+        <div class="activity-actions">
+          <button class="edit-activity-btn" data-activity="${act.activityNumber}">Edit Activity</button>
+          <button class="delete-activity-btn" data-activity="${act.activityNumber}">Delete Activity</button>
+        </div>
+      `;
             activityCardsContainer.appendChild(card);
           });
-      };
 
+        initializeEditDeleteListeners();
+      };
       const renderAll = () => {
         recalculateAllScores();
         renderParticipationChart();
@@ -649,7 +739,7 @@
         tableBody.innerHTML = "";
         STUDENTS.forEach((student) => {
           const level = initialParticipants[student.id] || "none";
-          const note = initialParticipants[student.id + "_note"] || ""; // optional note
+          const note = initialParticipants[student.id + "_note"] || "";
           const nameSlug = student.fullName
             .replace(/\s/g, "-")
             .replace(/[^\w-]/g, "");
@@ -663,17 +753,315 @@
             <td><input type="radio" name="student-${nameSlug}" value="partial" ${level === "partial" ? "checked" : ""}></td>
             <td><input type="radio" name="student-${nameSlug}" value="none" ${level === "none" ? "checked" : ""}></td>
             <td><input type="text" class="note-input" placeholder="Add note" value="${note}"></td>
-        `;
+          `;
 
           tableBody.appendChild(row);
         });
       };
 
-      const quickActivitySelect = document.getElementById(
-        "quick-activity-select",
-      );
+      function initializeEditDeleteListeners() {
+        // Edit activity buttons
+        document.querySelectorAll(".edit-activity-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const activityNumber = parseInt(e.target.dataset.activity);
+            openEditActivityModal(activityNumber);
+          });
+        });
+
+        // Delete activity buttons
+        document.querySelectorAll(".delete-activity-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            const activityNumber = parseInt(e.target.dataset.activity);
+            showDeleteConfirmation("activity", activityNumber);
+          });
+        });
+
+        // Note: Removed delete-score-btn listeners since we removed that column
+      }
+      async function openEditActivityModal(activityNumber) {
+        const activity = activitiesData.find(
+          (a) => a.activityNumber === activityNumber,
+        );
+        if (!activity) return;
+
+        currentEditingActivity = activity;
+
+        document.getElementById("edit-activity-title").value =
+          activity.description;
+
+        const editActivityTableBody = document.querySelector(
+          "#editActivityTable tbody",
+        );
+        editActivityTableBody.innerHTML = "";
+
+        STUDENTS.forEach((student) => {
+          const participant = activity.participants[student.id] || {
+            level: "none",
+            note: "",
+          };
+          const level =
+            typeof participant === "object" ? participant.level : participant;
+          const note =
+            typeof participant === "object" ? participant.note || "" : "";
+          const nameSlug = student.fullName
+            .replace(/\s/g, "-")
+            .replace(/[^\w-]/g, "");
+
+          const row = document.createElement("tr");
+          row.dataset.studentId = student.id;
+          row.innerHTML = `
+            <td>${student.fullName}</td>
+            <td><input type="radio" name="student-${nameSlug}" value="full" ${level === "full" ? "checked" : ""}></td>
+            <td><input type="radio" name="student-${nameSlug}" value="partial" ${level === "partial" ? "checked" : ""}></td>
+            <td><input type="radio" name="student-${nameSlug}" value="none" ${level === "none" ? "checked" : ""}></td>
+            <td><input type="text" class="note-input" placeholder="Add note" value="${note}"></td>
+            <td><button class="delete-score-btn" data-student="${student.id}" title="Delete Score"><i class="fas fa-trash"></i></button></td>
+          `;
+          editActivityTableBody.appendChild(row);
+        });
+
+        setupEditSelectAllLogic();
+        document.getElementById("editActivityModal").classList.remove("hidden");
+      }
+
+      function setupEditSelectAllLogic() {
+        const editSelectAllCheckbox = document.getElementById(
+          "editSelectAllCheckbox",
+        );
+        const editSelectAllRadios = document.querySelectorAll(
+          'input[name="edit-select-all"]',
+        );
+        const editActivityTableBody = document.querySelector(
+          "#editActivityTable tbody",
+        );
+
+        editSelectAllCheckbox.addEventListener("change", () => {
+          if (editSelectAllCheckbox.checked) {
+            const selectedRadio = Array.from(editSelectAllRadios).find(
+              (radio) => radio.checked,
+            );
+            const levelToApply = selectedRadio ? selectedRadio.value : "none";
+            applySelectAll(levelToApply, editActivityTableBody);
+          } else {
+            applySelectAll("none", editActivityTableBody);
+          }
+        });
+
+        editSelectAllRadios.forEach((r) =>
+          r.addEventListener("change", () => {
+            if (editSelectAllCheckbox.checked) {
+              applySelectAll(r.value, editActivityTableBody);
+            }
+          }),
+        );
+
+        editActivityTableBody
+          .querySelectorAll(".delete-score-btn")
+          .forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              const studentId = e.target.closest("button").dataset.student;
+              showDeleteConfirmation("score", {
+                activityNumber: currentEditingActivity.activityNumber,
+                studentId,
+                inEditModal: true,
+              });
+            });
+          });
+      }
+
+      function showDeleteConfirmation(type, data) {
+        currentDeletingItem = { type, data };
+
+        const modal = document.getElementById("deleteConfirmationModal");
+        const title = document.getElementById("confirmationTitle");
+        const message = document.getElementById("confirmationMessage");
+
+        if (type === "activity") {
+          const activity = activitiesData.find(
+            (a) => a.activityNumber === data,
+          );
+          title.textContent = "Delete Activity";
+          message.textContent = `Are you sure you want to delete "${activity.description}"? This action cannot be undone.`;
+        } else if (type === "score") {
+          const student = STUDENTS.find((s) => s.id === data.studentId);
+          const activity = activitiesData.find(
+            (a) => a.activityNumber === data.activityNumber,
+          );
+          title.textContent = "Delete Score";
+          message.textContent = `Are you sure you want to delete ${student.fullName}'s score for "${activity.description}"?`;
+        }
+
+        modal.classList.remove("hidden");
+      }
+
+      async function handleDeletion() {
+        if (!currentDeletingItem) return;
+
+        const { type, data } = currentDeletingItem;
+
+        try {
+          if (type === "activity") {
+            const activityIndex = activitiesData.findIndex(
+              (a) => a.activityNumber === data,
+            );
+            if (activityIndex !== -1) {
+              if (activityDocuments[data]) {
+                for (const docInfo of activityDocuments[data]) {
+                  await deleteDoc(doc(db, "activity", docInfo.docId));
+                }
+                delete activityDocuments[data];
+              }
+
+              activitiesData.splice(activityIndex, 1);
+              recalculateAllScores();
+              renderAll();
+            }
+          } else if (type === "score") {
+            const activity = activitiesData.find(
+              (a) => a.activityNumber === data.activityNumber,
+            );
+            if (activity && activity.participants[data.studentId]) {
+              if (activityDocuments[data.activityNumber]) {
+                const docToDelete = activityDocuments[data.activityNumber].find(
+                  (docInfo) => docInfo.studentID === data.studentId,
+                );
+                if (docToDelete) {
+                  await deleteDoc(doc(db, "activity", docToDelete.docId));
+                  activityDocuments[data.activityNumber] = activityDocuments[
+                    data.activityNumber
+                  ].filter((docInfo) => docInfo.studentID !== data.studentId);
+                }
+              }
+
+              delete activity.participants[data.studentId];
+              recalculateAllScores();
+              renderAll();
+
+              if (data.inEditModal) {
+                openEditActivityModal(data.activityNumber);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error deleting:", error);
+          alert("There was an error deleting the item. Please try again.");
+        } finally {
+          currentDeletingItem = null;
+          document
+            .getElementById("deleteConfirmationModal")
+            .classList.add("hidden");
+        }
+      }
+
+      async function updateActivity() {
+        if (!currentEditingActivity) return;
+
+        const title = document
+          .getElementById("edit-activity-title")
+          .value.trim();
+        if (!title) {
+          alert("Enter activity title");
+          return;
+        }
+
+        currentEditingActivity.description = title;
+
+        const editActivityTableBody = document.querySelector(
+          "#editActivityTable tbody",
+        );
+        const classroomID = localStorage.getItem("selectedClassId");
+
+        for (const row of editActivityTableBody.querySelectorAll("tr")) {
+          const studentId = row.dataset.studentId;
+          const name = row.querySelector("td:first-child").textContent;
+          const checked = row.querySelector(
+            `input[name="student-${name.replace(/\s/g, "-").replace(/[^\w-]/g, "")}"]:checked`,
+          );
+          const noteInput = row.querySelector(".note-input");
+          const note = noteInput ? noteInput.value.trim() : "";
+
+          if (checked) {
+            const newLevel = checked.value;
+
+            currentEditingActivity.participants[studentId] = {
+              level: newLevel,
+              note: note,
+            };
+
+            try {
+              if (activityDocuments[currentEditingActivity.activityNumber]) {
+                const existingDoc = activityDocuments[
+                  currentEditingActivity.activityNumber
+                ].find((docInfo) => docInfo.studentID === studentId);
+
+                if (existingDoc) {
+                  await updateDoc(doc(db, "activity", existingDoc.docId), {
+                    activityName: title,
+                    activityScore: newLevel,
+                    note: note,
+                  });
+                } else {
+                  const newDocRef = await addDoc(collection(db, "activity"), {
+                    activityName: title,
+                    activityNo: currentEditingActivity.activityNumber,
+                    activityScore: newLevel,
+                    note: note,
+                    classroomID,
+                    created_at: new Date(),
+                    studentID: studentId,
+                    teacherID,
+                  });
+
+                  activityDocuments[currentEditingActivity.activityNumber].push(
+                    {
+                      docId: newDocRef.id,
+                      studentID: studentId,
+                    },
+                  );
+                }
+              }
+            } catch (error) {
+              console.error("Error updating activity:", error);
+            }
+          } else if (currentEditingActivity.participants[studentId]) {
+            delete currentEditingActivity.participants[studentId];
+
+            if (activityDocuments[currentEditingActivity.activityNumber]) {
+              const docToDelete = activityDocuments[
+                currentEditingActivity.activityNumber
+              ].find((docInfo) => docInfo.studentID === studentId);
+              if (docToDelete) {
+                await deleteDoc(doc(db, "activity", docToDelete.docId));
+                activityDocuments[currentEditingActivity.activityNumber] =
+                  activityDocuments[
+                    currentEditingActivity.activityNumber
+                  ].filter((docInfo) => docInfo.studentID !== studentId);
+              }
+            }
+          }
+        }
+
+        recalculateAllScores();
+        renderAll();
+        document.getElementById("editActivityModal").classList.add("hidden");
+        currentEditingActivity = null;
+      }
+
+      function applySelectAll(level, tableBody) {
+        tableBody.querySelectorAll("tr").forEach((row) => {
+          const studentName = row.querySelector("td:first-child").textContent;
+          const nameSlug = studentName
+            .replace(/\s/g, "-")
+            .replace(/[^\w-]/g, "");
+          row
+            .querySelectorAll(`input[name="student-${nameSlug}"]`)
+            .forEach((radio) => {
+              radio.checked = radio.value === level;
+            });
+        });
+      }
+
       document.addEventListener("DOMContentLoaded", () => {
-        // DOM elements
         const participationChart =
           document.getElementById("participationChart");
         const activityCardsContainer = document.getElementById(
@@ -686,8 +1074,9 @@
 
         const addActivityModal = document.getElementById("addActivityModal");
         const quickLogModal = document.getElementById("quickLogModal");
+        const editActivityModal = document.getElementById("editActivityModal");
         const addActivityBtn = document.getElementById("addActivityBtn");
-        const quickLogBtn = document.getElementById("quickLogBtn"); // This opens the modal
+        const quickLogBtn = document.getElementById("quickLogBtn");
         const closeButtons = document.querySelectorAll(".close-modal-btn");
 
         const addActivityTitleInput =
@@ -705,7 +1094,7 @@
 
         const quickActivityInput = document.getElementById(
           "quick-activity-input",
-        ); // Fixed: changed from quick-activity-select to quick-activity-input
+        );
         const quickLogTableBody = document.querySelector(
           "#quickLogTable tbody",
         );
@@ -716,13 +1105,11 @@
           'input[name="quick-select-all"]',
         );
         const copyPreviousBtn = document.getElementById("copyPreviousBtn");
-        const quickLogBtnSubmit = document.getElementById("quickLogBtnSubmit"); // This submits the form
+        const quickLogBtnSubmit = document.getElementById("quickLogBtnSubmit");
 
-        // Modal helpers
         const openModal = (modal) => modal.classList.remove("hidden");
         const closeModal = (modal) => modal.classList.add("hidden");
 
-        // Close modals when clicking close button
         closeButtons.forEach((btn) => {
           btn.addEventListener("click", function () {
             const modal = this.closest(".modal-overlay");
@@ -730,14 +1117,12 @@
           });
         });
 
-        // Close modals when clicking outside
         document.addEventListener("click", (e) => {
           if (e.target.classList.contains("modal-overlay")) {
             closeModal(e.target);
           }
         });
 
-        // Week dropdown functionality
         const dropdownToggle = document.querySelector(".dropdown-toggle");
         const dropdownMenu = document.querySelector(".dropdown-menu");
 
@@ -745,7 +1130,6 @@
           dropdownMenu.classList.toggle("hidden");
         });
 
-        // Note modal functionality
         const noteModal = document.getElementById("noteModal");
         const noteText = document.getElementById("noteText");
         const noteCloseBtn = noteModal.querySelector(".close-modal-btn");
@@ -762,7 +1146,31 @@
 
         noteCloseBtn.addEventListener("click", () => closeModal(noteModal));
 
-        // Week dropdown selection
+        document
+          .querySelector("#editActivityModal .close-modal-btn")
+          .addEventListener("click", () => {
+            document
+              .getElementById("editActivityModal")
+              .classList.add("hidden");
+            currentEditingActivity = null;
+          });
+
+        document
+          .getElementById("confirmDeleteBtn")
+          .addEventListener("click", handleDeletion);
+        document
+          .getElementById("cancelDeleteBtn")
+          .addEventListener("click", () => {
+            document
+              .getElementById("deleteConfirmationModal")
+              .classList.add("hidden");
+            currentDeletingItem = null;
+          });
+
+        document
+          .getElementById("updateActivityBtn")
+          .addEventListener("click", updateActivity);
+
         dropdownMenu.querySelectorAll(".dropdown-item").forEach((item) => {
           item.addEventListener("click", (e) => {
             const idx = parseInt(e.target.dataset.idx);
@@ -796,7 +1204,6 @@
           });
         });
 
-        // Close dropdown if clicked outside
         document.addEventListener("click", (e) => {
           if (
             !dropdownToggle.contains(e.target) &&
@@ -806,11 +1213,9 @@
           }
         });
 
-        // Select All functionality
         const setupSelectAllLogic = (checkbox, radios, tableBody) => {
           checkbox.addEventListener("change", () => {
             if (checkbox.checked) {
-              // Find which radio is selected in the "Select All" section
               const selectedRadio = Array.from(radios).find(
                 (radio) => radio.checked,
               );
@@ -830,20 +1235,6 @@
           );
         };
 
-        const applySelectAll = (level, tableBody) => {
-          tableBody.querySelectorAll("tr").forEach((row) => {
-            const studentName = row.querySelector("td:first-child").textContent;
-            const nameSlug = studentName
-              .replace(/\s/g, "-")
-              .replace(/[^\w-]/g, "");
-            row
-              .querySelectorAll(`input[name="student-${nameSlug}"]`)
-              .forEach((radio) => {
-                radio.checked = radio.value === level;
-              });
-          });
-        };
-
         setupSelectAllLogic(
           addSelectAllCheckbox,
           addSelectAllRadios,
@@ -855,7 +1246,6 @@
           quickLogTableBody,
         );
 
-        // Add Activity Modal
         addActivityBtn.addEventListener("click", async () => {
           await fetchStudentsFromFirestore();
           populateStudentTables(addActivityTableBody);
@@ -886,51 +1276,75 @@
             const noteInput = row.querySelector(".note-input");
             const note = noteInput ? noteInput.value.trim() : "";
 
-            participants[id] = {
-              level: checked ? checked.value : "none",
-              note: note,
-            };
+            if (checked) {
+              participants[id] = {
+                level: checked.value,
+                note: note,
+              };
+            }
           });
 
+          // Calculate the next activity number
+          const nextActivityNumber =
+            activitiesData.length > 0
+              ? Math.max(...activitiesData.map((a) => a.activityNumber)) + 1
+              : 1;
+
           const newAct = {
-            activityNumber: activitiesData.length + 1,
+            activityNumber: nextActivityNumber,
             description: title,
             participants,
-            created_at: new Date(), // Add created_at for the new activity
+            created_at: new Date(),
           };
-          activitiesData.push(newAct);
 
-          for (const id in newAct.participants) {
-            const p = newAct.participants[id];
-            await addDoc(collection(db, "activity"), {
-              activityName: newAct.description,
-              activityNo: newAct.activityNumber,
-              activityScore: p.level,
-              note: p.note,
-              classroomID,
-              created_at: new Date(),
-              studentID: id,
-              teacherID,
-            });
+          // Initialize activity documents for this new activity
+          activityDocuments[nextActivityNumber] = [];
+
+          // Save each participant to Firestore
+          try {
+            for (const id in participants) {
+              const p = participants[id];
+              const docRef = await addDoc(collection(db, "activity"), {
+                activityName: title,
+                activityNo: nextActivityNumber,
+                activityScore: p.level,
+                note: p.note || "",
+                classroomID: classroomID,
+                created_at: new Date(),
+                studentID: id,
+                teacherID: teacherID,
+              });
+
+              // Store document reference
+              activityDocuments[nextActivityNumber].push({
+                docId: docRef.id,
+                studentID: id,
+              });
+            }
+
+            // Add to local data
+            activitiesData.push(newAct);
+            recalculateAllScores();
+            renderAll();
+            closeModal(addActivityModal);
+
+            // Show success message
+            alert("Activity successfully added!");
+          } catch (error) {
+            console.error("Error adding activity:", error);
+            alert("There was an error adding the activity. Please try again.");
           }
-
-          recalculateAllScores();
-          renderAll();
-          closeModal(addActivityModal);
         });
-
-        // QUICK LOG MODAL - FIXED: Add event listener to open the modal
         quickLogBtn.addEventListener("click", async () => {
           await fetchStudentsFromFirestore();
           populateStudentTables(quickLogTableBody);
           quickSelectAllCheckbox.checked = false;
-          quickActivityInput.value = ""; // Clear the input field
+          quickActivityInput.value = "";
           openModal(quickLogModal);
         });
 
-        // Quick Log Submit
         quickLogBtnSubmit.addEventListener("click", async () => {
-          const title = quickActivityInput.value.trim(); // Fixed: use quickActivityInput
+          const title = quickActivityInput.value.trim();
           if (!title) {
             alert("Enter activity title");
             return;
@@ -941,7 +1355,6 @@
             return;
           }
 
-          // Create participants object
           const participants = {};
           quickLogTableBody.querySelectorAll("tr").forEach((row) => {
             const id = row.dataset.studentId;
@@ -952,19 +1365,20 @@
             participants[id] = checked ? checked.value : "none";
           });
 
-          // Add as new activity
+          const newActivityNumber = activitiesData.length + 1;
           const newAct = {
-            activityNumber: activitiesData.length + 1,
+            activityNumber: newActivityNumber,
             description: title,
             participants,
-            created_at: new Date(), // Add created_at for the new activity
+            created_at: new Date(),
           };
           activitiesData.push(newAct);
 
-          // Save each participant in Firestore
+          activityDocuments[newActivityNumber] = [];
+
           for (const id in newAct.participants) {
             const level = newAct.participants[id];
-            await addDoc(collection(db, "activity"), {
+            const docRef = await addDoc(collection(db, "activity"), {
               activityName: newAct.description,
               activityNo: newAct.activityNumber,
               activityScore: level,
@@ -972,6 +1386,11 @@
               created_at: new Date(),
               studentID: id,
               teacherID,
+            });
+
+            activityDocuments[newActivityNumber].push({
+              docId: docRef.id,
+              studentID: id,
             });
           }
 
@@ -989,20 +1408,17 @@
           const previousActivity = activitiesData[activitiesData.length - 1];
           let copiedCount = 0;
 
-          // Apply previous activity's participation levels
           quickLogTableBody.querySelectorAll("tr").forEach((row) => {
             const studentId = row.dataset.studentId;
             const name = row.querySelector("td:first-child").textContent;
             const nameSlug = name.replace(/\s/g, "-").replace(/[^\w-]/g, "");
 
-            // Clear current selection
             row
               .querySelectorAll(`input[name="student-${nameSlug}"]`)
               .forEach((radio) => {
                 radio.checked = false;
               });
 
-            // Set previous participation level if it exists
             if (previousActivity.participants[studentId]) {
               const previousLevel =
                 typeof previousActivity.participants[studentId] === "object"
@@ -1019,18 +1435,15 @@
             }
           });
 
-          // Update the "Select All" checkbox state based on the copied data
           updateSelectAllCheckboxState(
             quickSelectAllCheckbox,
             quickLogTableBody,
           );
-
           alert(
             `Copied participation data for ${copiedCount} students from the previous activity!`,
           );
         });
 
-        // Helper function to update Select All checkbox state
         function updateSelectAllCheckboxState(checkbox, tableBody) {
           const rows = tableBody.querySelectorAll("tr");
           let allSame = true;
@@ -1054,7 +1467,6 @@
             }
           });
 
-          // If all students have the same level, check the Select All checkbox and set the corresponding radio
           if (allSame && firstLevel !== null) {
             checkbox.checked = true;
             const correspondingRadio = document.querySelector(

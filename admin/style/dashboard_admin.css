@@ -15,6 +15,125 @@ body {
   color: #000;
 }
 
+  .print-controls {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 0 20px;
+  }
+
+  .print-btn {
+    background: #0a3b82;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 500;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .print-btn:hover {
+    background: #08306b;
+  }
+
+  /* Print Styles */
+  @media print {
+    /* Hide elements that shouldn't be printed */
+    .navbar,
+    .secondary-header,
+    .separator,
+    .print-controls,
+    .calendar-widget,
+    .nav-menu,
+    .nav-icons {
+      display: none !important;
+    }
+
+    /* Ensure proper layout for printing */
+    .page-wrapper {
+      margin: 0;
+      padding: 0;
+    }
+
+    .main-content {
+      display: block !important;
+      padding: 0 !important;
+    }
+
+    .left-panel,
+    .right-panel {
+      width: 100% !important;
+      float: none !important;
+      margin-bottom: 20px;
+    }
+
+    /* Improve card appearance for print */
+    .card,
+    .metric-card,
+    .visualizations-grid,
+    .bottom-row-grid {
+      break-inside: avoid;
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+      margin-bottom: 15px;
+    }
+
+    /* Ensure good contrast */
+    body {
+      background: white !important;
+      color: black !important;
+      font-size: 12pt;
+    }
+
+    /* Hide interactive elements */
+    .fa-arrow-circle-left,
+    .fa-arrow-circle-right,
+    .week-filter {
+      display: none !important;
+    }
+
+    /* Add header for printed document */
+    @page {
+      margin: 1cm;
+      size: A4;
+    }
+
+    /* Add title to printed document */
+    body::before {
+      content: "AcadBird Admin Dashboard - Analytics Report";
+      display: block;
+      font-size: 18pt;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #0a3b82;
+      padding-bottom: 10px;
+    }
+
+    /* Ensure charts are visible */
+    .pie-chart-container,
+    .logs-list,
+    .class-activity-list {
+      opacity: 1 !important;
+    }
+  }
+
+  /* Additional styles for better print layout */
+  .print-version {
+    display: none;
+  }
+
+  @media print {
+    .print-version {
+      display: block;
+    }
+  }
+
 /* =======================
             Navbar
         ======================= */
@@ -873,7 +992,28 @@ body {
   background: #e5e7eb;
   color: #374151;
 }
+/* Add hover effects for metric cards */
+.metric-card {
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
 
+.metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.metric-card-green:hover {
+  background-color: #059669 !important;
+}
+
+.metric-card-blue:hover {
+  background-color: #1d4ed8 !important;
+}
+
+.metric-card-orange:hover {
+  background-color: #c89b0a !important;
+}
 .modal-footer {
   margin-top: 20px;
   text-align: right;
@@ -1017,7 +1157,12 @@ body {
   background-color: #f94346;
   animation-delay: 0.8s;
 }
-
+.canvas-pie-chart {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
 @keyframes animateLoader38 {
   0% {
     transform: scale(1);

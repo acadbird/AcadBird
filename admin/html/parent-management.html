@@ -1,0 +1,1179 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AcadBird Admin - Parent Management</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+    />
+    <link rel="stylesheet" href="../style/teacher-management.css" />
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <!-- Navbar -->
+      <div class="navbar">
+        <div class="navbar-container">
+          <div class="logo">
+            <img
+              src="../../main/img/AcadBird - White no text.png"
+              alt="AcadBird"
+              class="logo-img"
+            />
+            <img
+              src="../../main/img/AcadBird - White Text.png"
+              class="logo-text-img"
+              alt="AcadBird Text"
+            />Admin
+          </div>
+          <img
+            src="../../main/img/sunhill.png"
+            alt="AcadBird"
+            class="middle-logo"
+          />
+          <div class="nav-icons">
+            <a
+              href="notification_admin.html"
+              title="Notifications"
+              class="notification-badge-container"
+            >
+              <i class="fas fa-bell icon"></i>
+              <span
+                class="notification-bell-badge"
+                id="notification-bell-badge"
+                style="display: none"
+                >0</span
+              >
+            </a>
+            <a href="help_admin.html" title="Help">
+              <i class="fas fa-question-circle icon"></i>
+            </a>
+            <a href="settings_admin.html" title="Settings">
+              <div class="account-menu">
+                <i class="fas fa-user-circle icon"></i>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div id="loading-overlay">
+        <div class="loader-3">
+          <div class="circle"></div>
+          <div class="circle"></div>
+          <div class="circle"></div>
+          <div class="circle"></div>
+          <div class="circle"></div>
+        </div>
+      </div>
+
+      <!-- Secondary Header -->
+      <div class="secondary-header">
+        <div class="secondary-header-container">
+          <nav class="nav-menu">
+            <a href="dashboard_admin.html" class="nav-item">Dashboard</a>
+            <a href="classes-management.html" class="nav-item"
+              >Class Management</a
+            >
+            <a href="teacher-management.html" class="nav-item"
+              >Teacher Management</a
+            >
+            <a href="parent-management.html" class="nav-item active"
+              >Parent Management</a
+            >
+            <a href="calendar.html" class="nav-item">Calendar</a>
+            <a href="settings_admin.html" class="nav-item">Settings</a>
+          </nav>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <!-- Sidebar -->
+        <div class="sidebar">
+          <div class="admin-card">
+            <h2>Admin 1</h2>
+            <div>
+              <span>Sunhill Academy</span>
+            </div>
+          </div>
+
+          <div class="metrics-container">
+            <h3 class="metric-title">Parent Metrics</h3>
+
+            <div class="metric-card metric-card-green">
+              <p id="metric-active-parents">5</p>
+              <p>Active Parents</p>
+            </div>
+            <div class="metric-card metric-card-blue">
+              <p id="metric-total-parents">7</p>
+              <p>Total Parents</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+          <div class="teacher-directory">
+            <h2>Parent Directory</h2>
+
+            <div class="controls-container">
+              <div class="search-container">
+                <input
+                  type="text"
+                  id="search-input"
+                  class="search-input"
+                  placeholder="Search by Parent Name or Email"
+                />
+                <i class="fas fa-search search-icon"></i>
+              </div>
+
+              <div class="filters-container">
+                <select id="filter-status" class="filter-select">
+                  <option value="">Filter by Status</option>
+                  <option value="Active">Active</option>
+                  <option value="Inactive">Inactive</option>
+                  <option value="Archived">Archived</option>
+                </select>
+
+                <button id="add-parent-btn" class="add-teacher-btn">
+                  <i class="fas fa-user-plus"></i> Add Parent
+                </button>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="teachers-table">
+                <thead>
+                  <tr>
+                    <th>Parent Name</th>
+                    <th>Email</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="parents-table-body">
+                  <!-- Parents will be populated by JavaScript -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="pagination-container">
+              <p class="pagination-info">
+                Showing all <span id="pagination-total">7</span> parents
+              </p>
+            </div>
+          </div>
+
+          <div class="quick-action-card" id="quick-add-parent">
+            <h3 class="quick-action-title">Quick Action</h3>
+            <div class="quick-action-content">
+              <i class="fas fa-plus-circle"></i>
+              <p>Add New Parent</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Parent Modal -->
+    <div id="parent-modal" class="modal">
+      <div class="modal-content large">
+        <button class="close-button" id="close-parent-modal">&times;</button>
+        <h2 class="modal-title" id="parent-modal-title">Add New Parent ➕</h2>
+
+        <form id="parent-form">
+          <input type="hidden" id="parent-id" />
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="parent-first-name">First Name:</label>
+              <input
+                type="text"
+                id="parent-first-name"
+                name="firstName"
+                placeholder="Enter first name"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="parent-last-name">Last Name:</label>
+              <input
+                type="text"
+                id="parent-last-name"
+                name="lastName"
+                placeholder="Enter last name"
+                required
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="parent-email">Email Address:</label>
+            <input
+              type="email"
+              id="parent-email"
+              name="email"
+              placeholder="Enter email address"
+              required
+            />
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="cancel-parent">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary"
+              id="parent-form-submit-btn"
+            >
+              Add Parent
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Archive Confirmation Modal -->
+    <div id="archive-confirmation-modal" class="modal confirmation-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-archive-modal">&times;</button>
+        <h2 class="modal-title">Archive Parent</h2>
+
+        <p class="confirmation-message">
+          Are you sure you want to archive
+          <span id="archive-parent-name" class="font-bold"></span>?
+        </p>
+        <p class="confirmation-warning">
+          Archived parents will no longer appear in active lists but can be
+          restored later.
+        </p>
+
+        <div class="confirmation-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-archive">
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="btn btn-warning"
+            id="confirm-archive-btn"
+          >
+            Archive Parent
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-confirmation-modal" class="modal confirmation-modal">
+      <div class="modal-content">
+        <button class="close-button" id="close-delete-modal">&times;</button>
+        <h2 class="modal-title">Confirm Deletion</h2>
+
+        <p class="confirmation-message">
+          Are you sure you want to delete
+          <span id="delete-parent-name" class="font-bold"></span>?
+        </p>
+        <p class="confirmation-warning">This action cannot be undone.</p>
+
+        <div class="confirmation-actions">
+          <button type="button" class="btn btn-secondary" id="cancel-delete">
+            Cancel
+          </button>
+          <button type="button" class="btn btn-delete" id="confirm-delete-btn">
+            Delete Parent
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script type="module">
+      import {
+        getFirestore,
+        collection,
+        getDocs,
+        query,
+        where,
+        doc,
+        getDoc,
+        addDoc,
+        setDoc,
+        updateDoc,
+        deleteDoc,
+        serverTimestamp,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+      import {
+        getAuth,
+        createUserWithEmailAndPassword,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+      import { firebaseConfig } from "../../main/js/firebaseConfig.js";
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const auth = getAuth(app);
+      const loadingOverlay = document.getElementById("loading-overlay");
+
+      function showLoading() {
+        loadingOverlay.style.display = "flex";
+      }
+
+      // Hide overlay
+      function hideLoading() {
+        loadingOverlay.style.display = "none";
+      }
+
+      // =========================================================================================
+      // CORE FUNCTIONS
+      // =========================================================================================
+
+      // DOM Elements
+      const tableBody = document.getElementById("parents-table-body");
+      const searchInput = document.getElementById("search-input");
+      const filterStatus = document.getElementById("filter-status");
+      const parentModal = document.getElementById("parent-modal");
+      const parentForm = document.getElementById("parent-form");
+      const archiveConfirmationModal = document.getElementById(
+        "archive-confirmation-modal",
+      );
+      const archiveParentNameSpan = document.getElementById(
+        "archive-parent-name",
+      );
+      const confirmArchiveBtn = document.getElementById("confirm-archive-btn");
+      const deleteConfirmationModal = document.getElementById(
+        "delete-confirmation-modal",
+      );
+      const deleteParentNameSpan =
+        document.getElementById("delete-parent-name");
+      const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+
+      // State variables
+      let parentToArchiveId = null;
+      let parentToDeleteId = null;
+      let currentParentsData = [];
+
+      // --- Modal Control Functions ---
+      function openModal(modalElement) {
+        modalElement.style.display = "flex";
+      }
+
+      function closeModal(modalElement) {
+        modalElement.style.display = "none";
+      }
+
+      function closeParentModal() {
+        closeModal(parentModal);
+        parentForm.reset();
+      }
+
+      function closeArchiveConfirmationModal() {
+        closeModal(archiveConfirmationModal);
+        parentToArchiveId = null;
+      }
+
+      function closeDeleteConfirmationModal() {
+        closeModal(deleteConfirmationModal);
+        parentToDeleteId = null;
+      }
+
+      // Update the renderParentTable function to show ALL parents initially
+      async function renderParentTable() {
+        showLoading();
+        tableBody.innerHTML =
+          '<tr><td colspan="4" class="text-center py-4">Loading parents...</td></tr>';
+
+        try {
+          // Fetch parents from Firestore
+          const parentsQuery = query(
+            collection(db, "users"),
+            where("role", "==", "parent"),
+          );
+          const parentsSnap = await getDocs(parentsQuery);
+
+          console.log(`📊 Found ${parentsSnap.size} parents in database`);
+
+          tableBody.innerHTML = "";
+          currentParentsData = [];
+
+          if (parentsSnap.empty) {
+            console.log("❌ No parents found in database");
+            tableBody.innerHTML =
+              '<tr><td colspan="4" class="text-center py-4">No parents found</td></tr>';
+          } else {
+            parentsSnap.forEach((docSnap) => {
+              const parent = docSnap.data();
+              const parentId = docSnap.id;
+
+              console.log(`👨‍👩‍👧‍👦 Processing parent:`, {
+                id: parentId,
+                data: parent,
+              });
+
+              // Get parent's name using the new structure
+              const parentName =
+                parent.fullName ||
+                (parent.firstName && parent.lastName
+                  ? `${parent.firstName} ${parent.lastName}`
+                  : parent.name || "Unknown Parent");
+
+              // Get parent's email
+              const parentEmail = parent.email || "No email";
+
+              // Determine status - prioritize the status from Firestore
+              let status = parent.status || "Active";
+
+              const statusClass =
+                status === "Active"
+                  ? "status-active"
+                  : status === "Inactive"
+                    ? "status-inactive"
+                    : status === "Archived"
+                      ? "status-archived"
+                      : "status-available";
+
+              // Store parent data for filtering
+              currentParentsData.push({
+                id: parentId,
+                name: parentName,
+                firstName: parent.firstName,
+                lastName: parent.lastName,
+                email: parentEmail,
+                status: status,
+              });
+            });
+
+            // Apply initial filtering based on current filter status
+            await applyFiltersAndSearch();
+          }
+
+          // Update metrics
+          await updateMetrics();
+          hideLoading();
+        } catch (err) {
+          console.error("❌ Error loading parents:", err);
+          tableBody.innerHTML =
+            '<tr><td colspan="4" class="text-center py-4 text-red-600">Error loading parents: ' +
+            err.message +
+            "</td></tr>";
+          hideLoading();
+        }
+      }
+
+      // Update the applyFiltersAndSearch function to handle all filtering
+      async function applyFiltersAndSearch() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const filterValue = filterStatus.value;
+
+        console.log(
+          `🔍 Applying filters - Search: "${searchTerm}", Filter: "${filterValue}"`,
+        );
+
+        try {
+          let filteredData = [...currentParentsData];
+
+          // Apply search filter
+          if (searchTerm) {
+            filteredData = filteredData.filter(
+              (parent) =>
+                parent.name.toLowerCase().includes(searchTerm) ||
+                parent.email.toLowerCase().includes(searchTerm),
+            );
+          }
+
+          // Apply status filter - if no filter is selected, show all NON-ARCHIVED parents
+          if (filterValue) {
+            filteredData = filteredData.filter(
+              (parent) => parent.status === filterValue,
+            );
+          } else {
+            // Default: show all parents except archived ones
+            filteredData = filteredData.filter(
+              (parent) => parent.status !== "Archived",
+            );
+          }
+
+          console.log(
+            `📊 Filtered to ${filteredData.length} parents out of ${currentParentsData.length} total`,
+          );
+          renderFilteredTable(filteredData);
+        } catch (err) {
+          console.error("Error applying filters:", err);
+        }
+      }
+
+      // Update the metrics function to properly count archived parents
+      async function updateMetrics() {
+        try {
+          // 🔹 Total Parents: Count of users with role == "parent" (including archived)
+          const parentsQuery = query(
+            collection(db, "users"),
+            where("role", "==", "parent"),
+          );
+          const parentsSnap = await getDocs(parentsQuery);
+
+          let totalParents = 0;
+          let activeParents = 0;
+          let archivedParents = 0;
+
+          parentsSnap.forEach((doc) => {
+            const parent = doc.data();
+            totalParents++;
+            if (parent.status === "Archived") {
+              archivedParents++;
+            } else {
+              activeParents++;
+            }
+          });
+
+          console.log(
+            `📊 Parent Metrics - Total: ${totalParents}, Active: ${activeParents}, Archived: ${archivedParents}`,
+          );
+
+          // Update the UI
+          document.getElementById("metric-active-parents").textContent =
+            activeParents;
+          document.getElementById("metric-total-parents").textContent =
+            totalParents;
+        } catch (err) {
+          console.error("Error fetching metrics:", err);
+          // Fallback to showing 0 if there's an error
+          document.getElementById("metric-active-parents").textContent = "0";
+          document.getElementById("metric-total-parents").textContent = "0";
+        }
+      }
+
+      // Add CSS for the archived status if not already present
+      // Add this to your CSS file or in a style tag
+
+      // Update the renderParentTable function to properly fetch and display parents
+      // Update the openArchiveConfirmationModal to handle both archive and restore
+      function openArchiveConfirmationModal(
+        parentId,
+        parentName,
+        isArchived = false,
+      ) {
+        parentToArchiveId = parentId;
+        archiveParentNameSpan.textContent = parentName;
+
+        const modalTitle = document.querySelector(
+          "#archive-confirmation-modal .modal-title",
+        );
+        const confirmBtn = document.getElementById("confirm-archive-btn");
+        const message = document.querySelector(
+          "#archive-confirmation-modal .confirmation-message",
+        );
+
+        if (isArchived) {
+          // Restore mode
+          modalTitle.textContent = "Restore Parent";
+          message.innerHTML = `Are you sure you want to restore <span id="archive-parent-name" class="font-bold">${parentName}</span>?`;
+          confirmBtn.textContent = "Restore Parent";
+          confirmBtn.className = "btn btn-primary";
+        } else {
+          // Archive mode
+          modalTitle.textContent = "Archive Parent";
+          message.innerHTML = `Are you sure you want to archive <span id="archive-parent-name" class="font-bold">${parentName}</span>?`;
+          confirmBtn.textContent = "Archive Parent";
+          confirmBtn.className = "btn btn-warning";
+        }
+
+        openModal(archiveConfirmationModal);
+      }
+
+      // Update the renderFilteredTable function to conditionally show delete button
+      function renderFilteredTable(filteredParents) {
+        tableBody.innerHTML = "";
+
+        if (filteredParents.length === 0) {
+          tableBody.innerHTML =
+            '<tr><td colspan="4" class="text-center py-4">No parents found matching your criteria</td></tr>';
+        } else {
+          filteredParents.forEach((parent) => {
+            const statusClass =
+              parent.status === "Active"
+                ? "status-active"
+                : parent.status === "Inactive"
+                  ? "status-inactive"
+                  : parent.status === "Archived"
+                    ? "status-archived"
+                    : "status-available";
+
+            const newRow = tableBody.insertRow();
+            newRow.setAttribute("data-id", parent.id);
+
+            // Only show delete button for archived parents
+            // Create the delete button HTML separately
+            const deleteButton =
+              parent.status === "Archived"
+                ? '<button class="action-btn delete-btn" title="Delete Parent"><i class="fas fa-trash"></i></button>'
+                : "";
+
+            // Create the archive button title and icon
+            const archiveTitle =
+              parent.status === "Archived"
+                ? "Restore Parent"
+                : "Archive Parent";
+            const archiveIcon =
+              parent.status === "Archived" ? "fa-undo" : "fa-archive";
+
+            // Create the edit button disabled attribute
+            const editDisabled = parent.status === "Archived" ? "disabled" : "";
+
+            newRow.innerHTML = `
+    <td>
+        <a href="parent_profile.html?id=${parent.id}" class="parent-name-link" data-parent-id="${parent.id}">
+            ${parent.name}
+        </a>
+    </td>
+    <td>${parent.email}</td>
+    <td><span class="${statusClass}">${parent.status}</span></td>
+    <td>
+        <div class="action-buttons-container">
+            <button class="action-btn edit-btn" title="Edit Parent" ${editDisabled}>
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn archive-btn" title="${archiveTitle}">
+                <i class="fas ${archiveIcon}"></i>
+            </button>
+            ${deleteButton}
+        </div>
+    </td>
+`;
+          });
+        }
+
+        document.getElementById("pagination-total").textContent =
+          filteredParents.length;
+        attachRowEventListeners();
+      }
+
+      function attachRowEventListeners() {
+        console.log("🔗 Attaching event listeners to table rows...");
+
+        // Edit buttons
+        tableBody.querySelectorAll(".edit-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("✏️ Edit button clicked");
+            const row = e.target.closest("tr");
+            const parentId = row.getAttribute("data-id");
+            const parent = currentParentsData.find((p) => p.id === parentId);
+            if (parent) {
+              openParentModal(parent);
+            }
+          });
+        });
+
+        // Archive/Restore buttons
+        tableBody.querySelectorAll(".archive-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("📦 Archive button clicked");
+            const row = e.target.closest("tr");
+            const parentId = row.getAttribute("data-id");
+            const parentName =
+              row.cells[0].querySelector(".parent-name-link").textContent;
+            const statusCell = row.cells[2];
+            const isArchived = statusCell.textContent.trim() === "Archived";
+
+            openArchiveConfirmationModal(parentId, parentName, isArchived);
+          });
+        });
+
+        // Delete buttons (only present for archived parents)
+        tableBody.querySelectorAll(".delete-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("🗑️ Delete button clicked");
+            const row = e.target.closest("tr");
+            const parentId = row.getAttribute("data-id");
+            const parentName =
+              row.cells[0].querySelector(".parent-name-link").textContent;
+            console.log(`Deleting parent: ${parentName} (ID: ${parentId})`);
+            openDeleteConfirmationModal(parentId, parentName);
+          });
+        });
+
+        console.log(
+          `✅ Attached listeners: ${tableBody.querySelectorAll(".edit-btn").length} edit, ${tableBody.querySelectorAll(".archive-btn").length} archive, ${tableBody.querySelectorAll(".delete-btn").length} delete buttons`,
+        );
+      }
+
+      // Update the deleteParent function to actually delete from Firestore
+      async function deleteParent(parentId) {
+        try {
+          showLoading();
+          // Delete parent from Firestore
+          await deleteDoc(doc(db, "users", parentId));
+
+          // Also delete the parent from Firebase Authentication if needed
+          // Note: This requires admin privileges and the Firebase Admin SDK on the server side
+          // For now, we'll just delete from Firestore
+
+          alert("Parent has been permanently deleted.");
+          await renderParentTable(); // Reload the table
+          await updateMetrics(); // Update the metrics
+          hideLoading();
+        } catch (err) {
+          console.error("Error deleting parent:", err);
+          alert("Failed to delete parent. Please try again.");
+          hideLoading();
+        }
+        closeDeleteConfirmationModal();
+      }
+
+      // Update the modal to reflect that deletion is permanent
+      // Change the delete confirmation modal text to be more specific
+      const deleteModalTitle = document.querySelector(
+        "#delete-confirmation-modal .modal-title",
+      );
+      const deleteModalMessage = document.querySelector(
+        "#delete-confirmation-modal .confirmation-message",
+      );
+      const deleteModalWarning = document.querySelector(
+        "#delete-confirmation-modal .confirmation-warning",
+      );
+
+      // Update the modal content to be more specific about deletion
+      deleteModalTitle.textContent = "Permanently Delete Parent";
+      deleteModalMessage.innerHTML = `Are you sure you want to permanently delete <span id="delete-parent-name" class="font-bold"></span>?`;
+      deleteModalWarning.textContent =
+        "This action cannot be undone. The parent will be permanently removed from the system.";
+
+      // Update the CSS to ensure proper spacing when delete button is hidden
+      const style = document.createElement("style");
+      style.textContent = `
+    .status-archived {
+        background-color: #f3f4f6;
+        color: #6b7280;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid #d1d5db;
+    }
+    
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .action-btn:disabled:hover {
+        background-color: transparent;
+    }
+    
+    /* Ensure consistent spacing in actions column */
+    .teachers-table td:last-child {
+        min-width: 120px;
+    }
+`;
+      document.head.appendChild(style);
+
+      // Update the confirmArchiveBtn event listener to handle both archive and restore
+      confirmArchiveBtn.addEventListener("click", async () => {
+        if (parentToArchiveId) {
+          const row = tableBody.querySelector(
+            `tr[data-id="${parentToArchiveId}"]`,
+          );
+          const statusCell = row.cells[2];
+          const isCurrentlyArchived =
+            statusCell.textContent.trim() === "Archived";
+
+          if (isCurrentlyArchived) {
+            await restoreParent(parentToArchiveId);
+          } else {
+            await archiveParent(parentToArchiveId);
+          }
+        }
+      });
+
+      // Add restore parent function
+      async function restoreParent(parentId) {
+        try {
+          showLoading();
+          // Update the parent's status to "Active" in Firestore
+          await updateDoc(doc(db, "users", parentId), {
+            status: "Active",
+            restoredAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+
+          alert("Parent has been restored and is now active.");
+          await renderParentTable(); // Reload the table
+          await updateMetrics(); // Update the metrics
+          hideLoading();
+        } catch (err) {
+          console.error("Error restoring parent:", err);
+          alert("Failed to restore parent. Please try again.");
+          hideLoading();
+        }
+        closeArchiveConfirmationModal();
+      }
+
+      // Update the archiveParent function to work with Firestore
+      async function archiveParent(parentId) {
+        try {
+          showLoading();
+          // Update the parent's status to "Archived" in Firestore
+          await updateDoc(doc(db, "users", parentId), {
+            status: "Archived",
+            archivedAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+
+          alert("Parent has been archived.");
+          await renderParentTable(); // Reload the table
+          await updateMetrics(); // Update the metrics
+          hideLoading();
+        } catch (err) {
+          console.error("Error archiving parent:", err);
+          alert("Failed to archive parent. Please try again.");
+          hideLoading();
+        }
+        closeArchiveConfirmationModal();
+      }
+
+      // --- Modal Functions ---
+      function openParentModal(parentData = null) {
+        console.log("🎯 openParentModal called with parentData:", parentData);
+
+        const parentIdInput = document.getElementById("parent-id");
+        const parentFirstNameInput =
+          document.getElementById("parent-first-name");
+        const parentLastNameInput = document.getElementById("parent-last-name");
+        const parentEmailInput = document.getElementById("parent-email");
+        const parentModalTitle = document.getElementById("parent-modal-title");
+        const parentFormSubmitBtn = document.getElementById(
+          "parent-form-submit-btn",
+        );
+
+        parentForm.reset();
+        if (parentData) {
+          // Edit Mode
+          console.log("✏️ EDIT MODE - Parent data:", parentData);
+          parentModalTitle.textContent = `Edit Parent: ${parentData.name} 📝`;
+          parentFormSubmitBtn.textContent = "Save Changes";
+          parentIdInput.value = parentData.id;
+
+          // Split full name into first and last name
+          const nameParts = parentData.name.split(" ");
+          parentFirstNameInput.value = nameParts[0] || "";
+          parentLastNameInput.value = nameParts.slice(1).join(" ") || "";
+
+          parentEmailInput.value = parentData.email;
+        } else {
+          // Add Mode
+          console.log("➕ ADD MODE - Creating new parent");
+          parentModalTitle.textContent = "Add New Parent ➕";
+          parentFormSubmitBtn.textContent = "Add Parent";
+          parentIdInput.value = "";
+          parentFirstNameInput.value = "";
+          parentLastNameInput.value = "";
+          parentEmailInput.value = "";
+        }
+        openModal(parentModal);
+      }
+
+      async function handleParentFormSubmission(e) {
+        e.preventDefault();
+        console.log("📝 Parent form submitted");
+
+        const parentIdInput = document.getElementById("parent-id");
+        const parentFirstNameInput =
+          document.getElementById("parent-first-name");
+        const parentLastNameInput = document.getElementById("parent-last-name");
+        const parentEmailInput = document.getElementById("parent-email");
+
+        const firstName = parentFirstNameInput.value.trim();
+        const lastName = parentLastNameInput.value.trim();
+        const email = parentEmailInput.value.trim();
+
+        const isEditMode = !!parentIdInput.value;
+        const parentId = parentIdInput.value;
+
+        // Basic validation
+        if (!firstName || !lastName || !email) {
+          alert("Please fill out all required fields.");
+          return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          alert("Please enter a valid email address.");
+          return;
+        }
+
+        try {
+          showLoading();
+          // Check if email already exists in Firestore (only for new parents, not for edits)
+          if (!isEditMode) {
+            const emailCheckQuery = query(
+              collection(db, "users"),
+              where("email", "==", email),
+            );
+            const emailCheckSnap = await getDocs(emailCheckQuery);
+
+            if (!emailCheckSnap.empty) {
+              alert("A parent with this email already exists.");
+              hideLoading();
+              return;
+            }
+          }
+
+          let finalParentId = parentId;
+
+          if (isEditMode) {
+            // Update existing parent
+            const parentData = {
+              firstName: firstName,
+              lastName: lastName,
+              fullName: `${firstName} ${lastName}`,
+              email: email,
+              updatedAt: serverTimestamp(),
+            };
+
+            await updateDoc(doc(db, "users", parentId), parentData);
+            alert(`SUCCESS: Parent "${firstName} ${lastName}" updated!`);
+          } else {
+            // CREATE NEW PARENT IN FIREBASE AUTHENTICATION
+            const password = "TempPassword123!"; // You can generate a random password or set a default
+            const userCredential = await createUserWithEmailAndPassword(
+              auth,
+              email,
+              password,
+            );
+            const authUid = userCredential.user.uid;
+
+            // Create parent data for Firestore
+            const parentData = {
+              uid: authUid, // Store the auth UID in Firestore
+              firstName: firstName,
+              lastName: lastName,
+              fullName: `${firstName} ${lastName}`,
+              email: email,
+              role: "parent",
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+
+            // Add to Firestore with the same UID as authentication
+            await setDoc(doc(db, "users", authUid), parentData);
+            finalParentId = authUid;
+
+            alert(
+              `SUCCESS: Parent "${firstName} ${lastName}" created! Account email: ${email}`,
+            );
+          }
+
+          closeParentModal();
+          await renderParentTable();
+          hideLoading();
+        } catch (err) {
+          console.error("Error saving parent:", err);
+          hideLoading();
+          // Handle specific authentication errors
+          if (err.code === "auth/email-already-in-use") {
+            alert("This email is already registered in the system.");
+          } else if (err.code === "auth/invalid-email") {
+            alert("Please enter a valid email address.");
+          } else if (err.code === "auth/weak-password") {
+            alert("The password is too weak.");
+          } else {
+            alert("Failed to save parent. Please try again.");
+          }
+        }
+      }
+
+      function openDeleteConfirmationModal(parentId, parentName) {
+        console.log(
+          `🗑️ Opening delete confirmation for: ${parentName} (${parentId})`,
+        );
+        parentToDeleteId = parentId;
+        deleteParentNameSpan.textContent = parentName;
+        openModal(deleteConfirmationModal);
+      }
+
+      // Add this event listener to your init function
+      confirmDeleteBtn.addEventListener("click", async () => {
+        console.log(
+          `🗑️ Confirm delete clicked for parent: ${parentToDeleteId}`,
+        );
+        if (parentToDeleteId) {
+          await deleteParent(parentToDeleteId);
+        }
+      });
+
+      // Fetch unread notifications count for the badge
+      async function getUnreadNotificationsCount() {
+        try {
+          showLoading();
+          const notificationsSnapshot = await getDocs(
+            collection(db, "notification_admin"),
+          );
+          let unreadCount = 0;
+
+          notificationsSnapshot.forEach((doc) => {
+            const notification = doc.data();
+            if (notification.status === "unread") {
+              unreadCount++;
+            }
+          });
+
+          updateNotificationBellBadge(unreadCount);
+          hideLoading();
+          return unreadCount;
+        } catch (error) {
+          console.error("Error fetching notifications count:", error);
+          hideLoading();
+          return 0;
+        }
+      }
+
+      // Update the notification bell badge
+      function updateNotificationBellBadge(unreadCount) {
+        const notificationBellBadge = document.getElementById(
+          "notification-bell-badge",
+        );
+
+        if (!notificationBellBadge) return;
+
+        if (unreadCount > 0) {
+          notificationBellBadge.textContent =
+            unreadCount > 99 ? "99+" : unreadCount;
+          notificationBellBadge.style.display = "flex";
+
+          // Add pulse animation for new notifications
+          if (unreadCount > 0) {
+            notificationBellBadge.style.animation = "pulse 2s infinite";
+          }
+        } else {
+          notificationBellBadge.style.display = "none";
+        }
+      }
+
+      // Add this to your initialization function
+      // Fetch admin name from Firestore
+      async function fetchAdminName() {
+        try {
+          showLoading();
+          console.log("🔍 Fetching admin name...");
+
+          // Query for admin users
+          const adminQuery = query(
+            collection(db, "users"),
+            where("role", "==", "admin"),
+          );
+          const adminSnap = await getDocs(adminQuery);
+
+          if (adminSnap.empty) {
+            console.log("❌ No admin user found");
+            // Set default values
+            const adminNameElement = document.querySelector(".admin-card h2");
+            if (adminNameElement) {
+              adminNameElement.textContent = "Admin";
+            }
+            return;
+          }
+
+          // Get the first admin user (assuming there's only one admin)
+          const adminDoc = adminSnap.docs[0];
+          const adminData = adminDoc.data();
+
+          console.log("✅ Admin data found:", adminData);
+
+          // Update admin name in the card
+          const adminName =
+            `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim();
+          const adminNameElement = document.querySelector(".admin-card h2");
+
+          if (adminNameElement) {
+            adminNameElement.textContent = adminName || "Admin";
+          } else {
+            console.warn("❌ Admin name element not found");
+          }
+
+          hideLoading();
+        } catch (error) {
+          console.error("❌ Error fetching admin name:", error);
+          // Set default value on error
+          const adminNameElement = document.querySelector(".admin-card h2");
+          if (adminNameElement) {
+            adminNameElement.textContent = "Admin";
+          }
+          hideLoading();
+        }
+      }
+
+      // Update the initialization function
+      async function init() {
+        try {
+          showLoading();
+
+          // Fetch admin name first
+          await fetchAdminName();
+
+          // Your existing initialization code
+          parentForm.addEventListener("submit", handleParentFormSubmission);
+
+          // Add Parent button listeners
+          document
+            .getElementById("add-parent-btn")
+            .addEventListener("click", () => openParentModal());
+          document
+            .getElementById("quick-add-parent")
+            .addEventListener("click", () => openParentModal());
+
+          // Modal close buttons
+          document
+            .getElementById("close-parent-modal")
+            .addEventListener("click", closeParentModal);
+          document
+            .getElementById("close-archive-modal")
+            .addEventListener("click", closeArchiveConfirmationModal);
+          document
+            .getElementById("close-delete-modal")
+            .addEventListener("click", closeDeleteConfirmationModal);
+          document
+            .getElementById("cancel-parent")
+            .addEventListener("click", closeParentModal);
+          document
+            .getElementById("cancel-archive")
+            .addEventListener("click", closeArchiveConfirmationModal);
+          document
+            .getElementById("cancel-delete")
+            .addEventListener("click", closeDeleteConfirmationModal);
+
+          // Search and Filter listeners
+          searchInput.addEventListener("input", applyFiltersAndSearch);
+          filterStatus.addEventListener("change", applyFiltersAndSearch);
+
+          // Initial render with real data
+          renderParentTable();
+
+          // Add notification badge
+          getUnreadNotificationsCount();
+
+          hideLoading();
+        } catch (error) {
+          hideLoading();
+          console.error("Error initializing page:", error);
+        }
+      }
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>
