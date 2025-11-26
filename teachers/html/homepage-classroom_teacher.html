@@ -749,35 +749,40 @@
           studentCountEl.textContent = students.length;
           parentCountEl.textContent = parentIds.size;
 
-          const sortedStudents = scoredStudents.sort(
-            (a, b) => b.score - a.score,
-          );
-          console.log("Sorted students:", sortedStudents);
+          // Top engaged (highest scores)
+          const highestEngagement = [...scoredStudents]
+            .sort((a, b) => b.score - a.score) // Sort descending (highest first)
+            .slice(0, 3); // Take first 3 (highest scores)
 
           topEngagedList.innerHTML = "";
-          sortedStudents.slice(0, 3).forEach((student) => {
+          highestEngagement.forEach((student) => {
             topEngagedList.innerHTML += `
-                    <div class="student-item">
-                        <span class="student-name">${student.fullName}</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill-green" style="width: ${student.score}%;"></div>
-                        </div>
-                        <span class="progress-value">${Math.round(student.score)}</span>
+                <div class="student-item">
+                    <span class="student-name">${student.fullName}</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill-green" style="width: ${student.score}%;"></div>
                     </div>
-                `;
+                    <span class="progress-value">${Math.round(student.score)}</span>
+                </div>
+            `;
           });
 
+          // Low engagement (lowest scores) - FIXED
           lowEngagedList.innerHTML = "";
-          sortedStudents.slice(-3).forEach((student) => {
+          const lowestEngagement = [...scoredStudents]
+            .sort((a, b) => a.score - b.score) // Sort ascending (lowest first)
+            .slice(0, 3); // Take first 3 (lowest scores)
+
+          lowestEngagement.forEach((student) => {
             lowEngagedList.innerHTML += `
-                    <div class="student-item">
-                        <span class="student-name">${student.fullName}</span>
-                        <div class="progress-bar">
-                            <div class="progress-fill-red" style="width: ${student.score}%;"></div>
-                        </div>
-                        <span class="progress-value">${Math.round(student.score)}</span>
+                <div class="student-item">
+                    <span class="student-name">${student.fullName}</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill-red" style="width: ${student.score}%;"></div>
                     </div>
-                `;
+                    <span class="progress-value">${Math.round(student.score)}</span>
+                </div>
+            `;
           });
         } catch (err) {
           console.error("Error loading students:", err);

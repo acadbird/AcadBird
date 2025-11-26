@@ -541,7 +541,7 @@
           const chatBody = document.getElementById("chat-body");
           const activeChat = document.querySelector(".chat-item.active");
 
-          // Only update if this is the active chat
+          // Only update if this is the active chats
           if (activeChat && activeChat.dataset.chatId === chatId) {
             chatBody.innerHTML = "";
 
@@ -602,6 +602,7 @@
         async loadExistingChats() {
           try {
             const existingChats = [];
+            const addedParticipantIds = new Set(); // Track added participants to avoid duplicates
 
             // Get chats where current user is parent
             const parentChatsQuery = query(
@@ -613,8 +614,12 @@
 
             for (const chatDoc of parentChatsSnapshot.docs) {
               const chatData = chatDoc.data();
-              if (chatData.teacherId) {
-                // This is a parent-teacher chat
+
+              // Handle parent-teacher chats
+              if (
+                chatData.teacherId &&
+                !addedParticipantIds.has(chatData.teacherId)
+              ) {
                 const teacherDoc = await getDoc(
                   doc(db, "users", chatData.teacherId),
                 );
@@ -626,8 +631,45 @@
                     name: `${teacherData.firstName} ${teacherData.lastName}`.trim(),
                     type: "teacher",
                     classroomId: chatData.classroomId,
-                    classroomName: "Classroom",
+                    classroomName: chatData.classroomName || "Classroom",
                   });
+                  addedParticipantIds.add(chatData.teacherId); // Mark as added
+                }
+              }
+
+              // Handle parent-parent chats
+              if (
+                chatData.parentId2 &&
+                !addedParticipantIds.has(chatData.parentId2)
+              ) {
+                const parentDoc = await getDoc(
+                  doc(db, "users", chatData.parentId2),
+                );
+                if (parentDoc.exists()) {
+                  const parentData = parentDoc.data();
+                  // Find the student for this parent
+                  const studentsQuery = query(
+                    collection(db, "students"),
+                    where("parentId", "==", chatData.parentId2),
+                  );
+                  const studentsSnapshot = await getDocs(studentsQuery);
+                  let studentName = "Student";
+                  if (!studentsSnapshot.empty) {
+                    const studentData = studentsSnapshot.docs[0].data();
+                    studentName =
+                      `${studentData.firstName} ${studentData.lastName}`.trim();
+                  }
+
+                  existingChats.push({
+                    chatId: chatDoc.id,
+                    participantId: chatData.parentId2,
+                    name: `${parentData.firstName} ${parentData.lastName}`.trim(),
+                    type: "parent",
+                    studentName: studentName,
+                    classroomId: chatData.classroomId,
+                    classroomName: chatData.classroomName || "Classroom",
+                  });
+                  addedParticipantIds.add(chatData.parentId2); // Mark as added
                 }
               }
             }
@@ -642,8 +684,12 @@
 
             for (const chatDoc of teacherChatsSnapshot.docs) {
               const chatData = chatDoc.data();
-              if (chatData.parentId) {
-                // This is a teacher-parent chat
+
+              // Handle teacher-parent chats
+              if (
+                chatData.parentId &&
+                !addedParticipantIds.has(chatData.parentId)
+              ) {
                 const parentDoc = await getDoc(
                   doc(db, "users", chatData.parentId),
                 );
@@ -669,12 +715,14 @@
                     type: "parent",
                     studentName: studentName,
                     classroomId: chatData.classroomId,
-                    classroomName: "Classroom",
+                    classroomName: chatData.classroomName || "Classroom",
                   });
+                  addedParticipantIds.add(chatData.parentId); // Mark as added
                 }
               }
             }
 
+            console.log("Deduplicated existing chats:", existingChats);
             return existingChats;
           } catch (error) {
             console.error("Error loading existing chats:", error);
@@ -696,18 +744,24 @@
 
           chatList.innerHTML = "";
 
-          // Add existing chats first
+          // Create a Set to track which participants we've already added
+          const addedParticipantIds = new Set();
+
+          // Add existing chats first and mark them as added
           for (const chat of existingChats) {
             const chatItem = this.createChatItem(chat);
             chatList.appendChild(chatItem);
+            addedParticipantIds.add(chat.participantId);
+            console.log(
+              "Added existing chat for participant:",
+              chat.participantId,
+            );
           }
 
           // Add potential participants that don't have existing chats
           for (const participant of participants) {
-            const existingChat = existingChats.find(
-              (chat) => chat.participantId === participant.id,
-            );
-            if (!existingChat) {
+            // Only add if this participant doesn't already have a chat
+            if (!addedParticipantIds.has(participant.id)) {
               const chatId = await this.getOrCreateChatId(participant.id);
               if (chatId) {
                 const chatItem = this.createChatItem({
@@ -719,7 +773,11 @@
                   classroomName: participant.classroomName,
                 });
                 chatList.appendChild(chatItem);
+                addedParticipantIds.add(participant.id);
+                console.log("Added new chat for participant:", participant.id);
               }
+            } else {
+              console.log("Skipping duplicate participant:", participant.id);
             }
           }
 
@@ -1469,7 +1527,7 @@
                   chatItem.click();
                 } else {
                   // If chat item doesn't exist yet, reload chat list
-                  await ChatService.loadChatList();
+
                   const newChatItem = document.querySelector(
                     `.chat-item[data-participant-id="${participantId}"]`,
                   );

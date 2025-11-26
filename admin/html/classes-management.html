@@ -162,7 +162,9 @@
               class="p-4 rounded-xl shadow-lg text-center bg-metric-blue text-white font-bold border border-black"
             >
               <p class="text-4xl" id="metric-total-students">Loading...</p>
-              <p class="text-sm uppercase tracking-wider">Total Active Students</p>
+              <p class="text-sm uppercase tracking-wider">
+                Total Active Students
+              </p>
             </div>
             <div
               class="p-4 rounded-xl shadow-lg text-center bg-metric-orange text-white font-bold border border-black"
@@ -656,12 +658,12 @@
           ).textContent = pendingSnap.size;
 
           // 🔹 Total Students
-         // 🔹 Total Active Students (only status == "active")
-const activeStudentSnap = await getDocs(
-  query(collection(db, "students"), where("status", "==", "active"))
-);
-document.getElementById("metric-total-students").textContent =
-  activeStudentSnap.size;
+          // 🔹 Total Active Students (only status == "active")
+          const activeStudentSnap = await getDocs(
+            query(collection(db, "students"), where("status", "==", "active")),
+          );
+          document.getElementById("metric-total-students").textContent =
+            activeStudentSnap.size;
 
           hideLoading(); // ADD THIS LINE
         } catch (err) {
@@ -1167,130 +1169,132 @@ document.getElementById("metric-total-students").textContent =
         }
       }
 
-     document.addEventListener("click", async (e) => {
-  const button = e.target.closest(
-    ".edit-btn, .archive-btn, .assign-btn, .restore-btn, .delete-btn",
-  );
-  if (!button) return;
-
-  const action = button.title;
-  const classId = button.getAttribute("data-class-id");
-  const row = document.querySelector(`tr[data-id="${classId}"]`);
-
-  if (action === "Edit Class" || action === "Assign Teacher") {
-    if (row) openEditClassModal(row);
-    return;
-  }
-
-  if (
-    confirm(
-      `Are you sure you want to perform "${action}" on class ID ${classId}?`,
-    )
-  ) {
-    try {
-      showLoading(); // ADD THIS LINE
-
-      let message = `Successfully performed "${action}" on Class ID ${classId}.`;
-      let oldStatus = row ? row.getAttribute("data-status") : null;
-      let newStatus = oldStatus;
-
-      if (action === "Archive Class") {
-        // Update Firestore to set status to "archived"
-        await updateDoc(doc(db, "classrooms", classId), {
-          status: "archived",
-        });
-        newStatus = "archived";
-        message = `Class ID ${classId} has been moved to the Archive.`;
-      } else if (action === "Restore Class") {
-        // Update Firestore to set status to "active"
-        await updateDoc(doc(db, "classrooms", classId), {
-          status: "active",
-        });
-        newStatus = "active";
-        message = `Class ID ${classId} has been Restored and is now Active.`;
-      } else if (
-        action === "Delete Class" ||
-        action === "Permanent Delete"
-      ) {
-        // First, update all students in this class to have status "pending"
-        const studentsSnapshot = await getDocs(
-          query(collection(db, "students"), where("classroomId", "==", classId))
+      document.addEventListener("click", async (e) => {
+        const button = e.target.closest(
+          ".edit-btn, .archive-btn, .assign-btn, .restore-btn, .delete-btn",
         );
-        
-        // Update each student's status to "pending" and remove classroom assignment
-        const updatePromises = [];
-        studentsSnapshot.forEach((studentDoc) => {
-          updatePromises.push(
-            updateDoc(doc(db, "students", studentDoc.id), {
-              status: "pending",
-              classroomId: null // Remove the classroom assignment
-            })
-          );
-        });
-        
-        // Wait for all student updates to complete
-        await Promise.all(updatePromises);
-        
-        // Then delete the classroom
-        await deleteDoc(doc(db, "classrooms", classId));
-        
-        if (row) row.remove();
-        // Also remove from the archived modal list if it was deleted there
-        const archivedItem = archivedListContainer.querySelector(
-          `div[data-id="${classId}"]`,
-        );
-        if (archivedItem) archivedItem.remove();
-        
-        message = `Successfully deleted Class ID ${classId}. ${studentsSnapshot.size} student(s) have been set to pending status.`;
-      }
+        if (!button) return;
 
-      // Update the main table row visualization and data attributes
-      if (row && newStatus !== oldStatus) {
-        row.setAttribute("data-status", newStatus);
-        const statusSpan = row.querySelector(".status-cell span");
-        statusSpan.textContent = newStatus;
-        statusSpan.className = `font-medium text-status-${newStatus.toLowerCase().replace(/\s/g, "-")}`;
+        const action = button.title;
+        const classId = button.getAttribute("data-class-id");
+        const row = document.querySelector(`tr[data-id="${classId}"]`);
 
-        if (newStatus === "archived") {
-          // Ensure the row is hidden when archived, as per the filter logic
-          row.style.display = "none";
-          row.classList.add("opacity-70");
-        } else {
-          row.classList.remove("opacity-70");
-          row.style.display = "";
-          row.classList.remove("bg-yellow-50/50");
-          // Update status class for active classes
-          if (newStatus === "active") {
-            statusSpan.className = "font-medium text-status-active";
-          }
+        if (action === "Edit Class" || action === "Assign Teacher") {
+          if (row) openEditClassModal(row);
+          return;
         }
 
-        updateRowActions(row, newStatus, classId);
-      }
+        if (
+          confirm(
+            `Are you sure you want to perform "${action}" on class ID ${classId}?`,
+          )
+        ) {
+          try {
+            showLoading(); // ADD THIS LINE
 
-      alert(message);
+            let message = `Successfully performed "${action}" on Class ID ${classId}.`;
+            let oldStatus = row ? row.getAttribute("data-status") : null;
+            let newStatus = oldStatus;
 
-      // Reload metrics to reflect changes
-      loadMetrics();
+            if (action === "Archive Class") {
+              // Update Firestore to set status to "archived"
+              await updateDoc(doc(db, "classrooms", classId), {
+                status: "archived",
+              });
+              newStatus = "archived";
+              message = `Class ID ${classId} has been moved to the Archive.`;
+            } else if (action === "Restore Class") {
+              // Update Firestore to set status to "active"
+              await updateDoc(doc(db, "classrooms", classId), {
+                status: "active",
+              });
+              newStatus = "active";
+              message = `Class ID ${classId} has been Restored and is now Active.`;
+            } else if (
+              action === "Delete Class" ||
+              action === "Permanent Delete"
+            ) {
+              // First, update all students in this class to have status "pending"
+              const studentsSnapshot = await getDocs(
+                query(
+                  collection(db, "students"),
+                  where("classroomId", "==", classId),
+                ),
+              );
 
-      // If the action was taken from the archived modal, refresh its view
-      if (archivedClassesModal.style.display === "flex") {
-        openArchivedClassesModal(); // Re-populate list to reflect changes
-      }
+              // Update each student's status to "pending" and remove classroom assignment
+              const updatePromises = [];
+              studentsSnapshot.forEach((studentDoc) => {
+                updatePromises.push(
+                  updateDoc(doc(db, "students", studentDoc.id), {
+                    status: "pending",
+                    classroomId: null, // Remove the classroom assignment
+                  }),
+                );
+              });
 
-      // Re-sort and filter main table
-      sortTable(currentSortKey, sortDirection);
-      applyFiltersAndSearch();
+              // Wait for all student updates to complete
+              await Promise.all(updatePromises);
 
-      hideLoading(); // ADD THIS LINE
-    } catch (err) {
-      hideLoading(); // ADD THIS LINE even on error
-      console.error("Error performing action:", err);
-      alert(`Failed to perform "${action}". Please try again.`);
-    }
-  }
-});
+              // Then delete the classroom
+              await deleteDoc(doc(db, "classrooms", classId));
 
+              if (row) row.remove();
+              // Also remove from the archived modal list if it was deleted there
+              const archivedItem = archivedListContainer.querySelector(
+                `div[data-id="${classId}"]`,
+              );
+              if (archivedItem) archivedItem.remove();
+
+              message = `Successfully deleted Class ID ${classId}. ${studentsSnapshot.size} student(s) have been set to pending status.`;
+            }
+
+            // Update the main table row visualization and data attributes
+            if (row && newStatus !== oldStatus) {
+              row.setAttribute("data-status", newStatus);
+              const statusSpan = row.querySelector(".status-cell span");
+              statusSpan.textContent = newStatus;
+              statusSpan.className = `font-medium text-status-${newStatus.toLowerCase().replace(/\s/g, "-")}`;
+
+              if (newStatus === "archived") {
+                // Ensure the row is hidden when archived, as per the filter logic
+                row.style.display = "none";
+                row.classList.add("opacity-70");
+              } else {
+                row.classList.remove("opacity-70");
+                row.style.display = "";
+                row.classList.remove("bg-yellow-50/50");
+                // Update status class for active classes
+                if (newStatus === "active") {
+                  statusSpan.className = "font-medium text-status-active";
+                }
+              }
+
+              updateRowActions(row, newStatus, classId);
+            }
+
+            alert(message);
+
+            // Reload metrics to reflect changes
+            loadMetrics();
+
+            // If the action was taken from the archived modal, refresh its view
+            if (archivedClassesModal.style.display === "flex") {
+              openArchivedClassesModal(); // Re-populate list to reflect changes
+            }
+
+            // Re-sort and filter main table
+            sortTable(currentSortKey, sortDirection);
+            applyFiltersAndSearch();
+
+            hideLoading(); // ADD THIS LINE
+          } catch (err) {
+            hideLoading(); // ADD THIS LINE even on error
+            console.error("Error performing action:", err);
+            alert(`Failed to perform "${action}". Please try again.`);
+          }
+        }
+      });
 
       function applyFiltersAndSearch() {
         const selectedTeacherId = filterTeacher.value;

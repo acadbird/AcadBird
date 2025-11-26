@@ -329,10 +329,10 @@
         serverTimestamp,
       } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
       import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  deleteUser,
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        getAuth,
+        createUserWithEmailAndPassword,
+        deleteUser,
+      } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
       import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 
       import { firebaseConfig } from "../../main/js/firebaseConfig.js";
@@ -512,8 +512,8 @@
               const teacherEmail = teacher.email || "No email";
 
               // Get classes taught (from teacher's data or from classroom assignments)
-             // Get classes taught ONLY from classroom assignments (remove classesTaught field reference)
-const classesTaught = teacherClassroomsMap.get(teacherId) || [];
+              // Get classes taught ONLY from classroom assignments (remove classesTaught field reference)
+              const classesTaught = teacherClassroomsMap.get(teacherId) || [];
               const classesDisplay =
                 classesTaught.length > 0 ? classesTaught.join(", ") : "None";
 
@@ -857,7 +857,10 @@ const classesTaught = teacherClassroomsMap.get(teacherId) || [];
           );
           // Only show unassigned classrooms (teacherID parameter not needed anymore)
           // Only show unassigned classrooms (teacherID parameter not needed anymore)
-populateClassesMultiselect(classesTaughtMultiselect, teacherData.classes);
+          populateClassesMultiselect(
+            classesTaughtMultiselect,
+            teacherData.classes,
+          );
         } else {
           // Add Mode - show only unassigned classrooms
           console.log("➕ ADD MODE - Creating new teacher");
@@ -874,181 +877,184 @@ populateClassesMultiselect(classesTaughtMultiselect, teacherData.classes);
         }
         openModal(teacherModal);
       }
-    
+
       async function handleTeacherFormSubmission(e) {
-  e.preventDefault();
-  console.log("📝 Teacher form submitted");
+        e.preventDefault();
+        console.log("📝 Teacher form submitted");
 
-  const teacherIdInput = document.getElementById("teacher-id");
-  const teacherFirstNameInput = document.getElementById("teacher-first-name");
-  const teacherLastNameInput = document.getElementById("teacher-last-name");
-  const teacherEmailInput = document.getElementById("teacher-email");
+        const teacherIdInput = document.getElementById("teacher-id");
+        const teacherFirstNameInput =
+          document.getElementById("teacher-first-name");
+        const teacherLastNameInput =
+          document.getElementById("teacher-last-name");
+        const teacherEmailInput = document.getElementById("teacher-email");
 
-  const firstName = teacherFirstNameInput.value.trim();
-  const lastName = teacherLastNameInput.value.trim();
-  const email = teacherEmailInput.value.trim();
+        const firstName = teacherFirstNameInput.value.trim();
+        const lastName = teacherLastNameInput.value.trim();
+        const email = teacherEmailInput.value.trim();
 
-  // Get selected classes from checkboxes
-  const selectedClassCheckboxes = classesTaughtMultiselect.querySelectorAll(
-    'input[type="checkbox"]:checked',
-  );
-  const selectedClassNames = Array.from(selectedClassCheckboxes).map(
-    (cb) => cb.value,
-  );
-
-  const isEditMode = !!teacherIdInput.value;
-  const teacherId = teacherIdInput.value;
-
-  // Basic validation
-  if (!firstName || !lastName || !email) {
-    alert("Please fill out all required fields.");
-    return;
-  }
-
-  // Email validation
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(email)) {
-    alert("Please enter a valid email address.");
-    return;
-  }
-
-  try {
-    showLoading();
-    
-    // Check if email already exists in Firestore (only for new teachers, not for edits)
-    if (!isEditMode) {
-      const emailCheckQuery = query(
-        collection(db, "users"),
-        where("email", "==", email),
-      );
-      const emailCheckSnap = await getDocs(emailCheckQuery);
-
-      if (!emailCheckSnap.empty) {
-        alert("A teacher with this email already exists.");
-        hideLoading();
-        return;
-      }
-    }
-
-    let finalTeacherId = teacherId;
-
-    if (isEditMode) {
-      // Update existing teacher - REMOVE classesTaught field
-      const teacherData = {
-        firstName: firstName,
-        lastName: lastName,
-        fullName: `${firstName} ${lastName}`,
-        email: email,
-        // REMOVED: classesTaught: classesTaught,
-        updatedAt: serverTimestamp(),
-      };
-
-      await updateDoc(doc(db, "users", teacherId), teacherData);
-      alert(`SUCCESS: Teacher "${firstName} ${lastName}" updated!`);
-    } else {
-      // CREATE NEW TEACHER IN FIREBASE AUTHENTICATION
-      const password = "TempPassword123!"; // You can generate a random password or set a default
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      const authUid = userCredential.user.uid;
-
-      // Create teacher data for Firestore - REMOVE classesTaught field
-      const teacherData = {
-        uid: authUid, // Store the auth UID in Firestore
-        firstName: firstName,
-        lastName: lastName,
-        fullName: `${firstName} ${lastName}`,
-        email: email,
-        role: "teacher",
-        // REMOVED: classesTaught: classesTaught,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      };
-
-      // Add to Firestore with the same UID as authentication
-      await setDoc(doc(db, "users", authUid), teacherData);
-      finalTeacherId = authUid;
-
-      alert(
-        `SUCCESS: Teacher "${firstName} ${lastName}" created! Account email: ${email}`,
-      );
-    }
-
-    // UPDATE CLASSROOM ASSIGNMENTS - ONLY update classrooms collection
-    const classroomsSnap = await getDocs(collection(db, "classrooms"));
-    const classroomUpdates = [];
-
-    // Process all selected classrooms - assign to teacher
-    for (const checkbox of selectedClassCheckboxes) {
-      const classroomName = checkbox.value;
-
-      const classroomDoc = classroomsSnap.docs.find(
-        (doc) => doc.data().classroomName === classroomName,
-      );
-
-      if (classroomDoc) {
-        classroomUpdates.push(
-          updateDoc(doc(db, "classrooms", classroomDoc.id), {
-            teacherId: finalTeacherId,
-            status: "active",
-          }),
-        );
-      }
-    }
-
-    // Handle unassigning for edit mode
-    if (isEditMode) {
-      const allClassCheckboxes = classesTaughtMultiselect.querySelectorAll(
-        'input[type="checkbox"]',
-      );
-      const deselectedClasses = Array.from(allClassCheckboxes)
-        .filter((cb) => !cb.checked)
-        .map((cb) => cb.value);
-
-      for (const classroomName of deselectedClasses) {
-        const classroomDoc = classroomsSnap.docs.find(
-          (doc) =>
-            doc.data().classroomName === classroomName &&
-            doc.data().teacherId === finalTeacherId,
-        );
-
-        if (classroomDoc) {
-          classroomUpdates.push(
-            updateDoc(doc(db, "classrooms", classroomDoc.id), {
-              teacherId: "",
-              status: "pending",
-            }),
+        // Get selected classes from checkboxes
+        const selectedClassCheckboxes =
+          classesTaughtMultiselect.querySelectorAll(
+            'input[type="checkbox"]:checked',
           );
+        const selectedClassNames = Array.from(selectedClassCheckboxes).map(
+          (cb) => cb.value,
+        );
+
+        const isEditMode = !!teacherIdInput.value;
+        const teacherId = teacherIdInput.value;
+
+        // Basic validation
+        if (!firstName || !lastName || !email) {
+          alert("Please fill out all required fields.");
+          return;
+        }
+
+        // Email validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          alert("Please enter a valid email address.");
+          return;
+        }
+
+        try {
+          showLoading();
+
+          // Check if email already exists in Firestore (only for new teachers, not for edits)
+          if (!isEditMode) {
+            const emailCheckQuery = query(
+              collection(db, "users"),
+              where("email", "==", email),
+            );
+            const emailCheckSnap = await getDocs(emailCheckQuery);
+
+            if (!emailCheckSnap.empty) {
+              alert("A teacher with this email already exists.");
+              hideLoading();
+              return;
+            }
+          }
+
+          let finalTeacherId = teacherId;
+
+          if (isEditMode) {
+            // Update existing teacher - REMOVE classesTaught field
+            const teacherData = {
+              firstName: firstName,
+              lastName: lastName,
+              fullName: `${firstName} ${lastName}`,
+              email: email,
+              // REMOVED: classesTaught: classesTaught,
+              updatedAt: serverTimestamp(),
+            };
+
+            await updateDoc(doc(db, "users", teacherId), teacherData);
+            alert(`SUCCESS: Teacher "${firstName} ${lastName}" updated!`);
+          } else {
+            // CREATE NEW TEACHER IN FIREBASE AUTHENTICATION
+            const password = "TempPassword123!"; // You can generate a random password or set a default
+            const userCredential = await createUserWithEmailAndPassword(
+              auth,
+              email,
+              password,
+            );
+            const authUid = userCredential.user.uid;
+
+            // Create teacher data for Firestore - REMOVE classesTaught field
+            const teacherData = {
+              uid: authUid, // Store the auth UID in Firestore
+              firstName: firstName,
+              lastName: lastName,
+              fullName: `${firstName} ${lastName}`,
+              email: email,
+              role: "teacher",
+              // REMOVED: classesTaught: classesTaught,
+              createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
+            };
+
+            // Add to Firestore with the same UID as authentication
+            await setDoc(doc(db, "users", authUid), teacherData);
+            finalTeacherId = authUid;
+
+            alert(
+              `SUCCESS: Teacher "${firstName} ${lastName}" created! Account email: ${email}`,
+            );
+          }
+
+          // UPDATE CLASSROOM ASSIGNMENTS - ONLY update classrooms collection
+          const classroomsSnap = await getDocs(collection(db, "classrooms"));
+          const classroomUpdates = [];
+
+          // Process all selected classrooms - assign to teacher
+          for (const checkbox of selectedClassCheckboxes) {
+            const classroomName = checkbox.value;
+
+            const classroomDoc = classroomsSnap.docs.find(
+              (doc) => doc.data().classroomName === classroomName,
+            );
+
+            if (classroomDoc) {
+              classroomUpdates.push(
+                updateDoc(doc(db, "classrooms", classroomDoc.id), {
+                  teacherId: finalTeacherId,
+                  status: "active",
+                }),
+              );
+            }
+          }
+
+          // Handle unassigning for edit mode
+          if (isEditMode) {
+            const allClassCheckboxes =
+              classesTaughtMultiselect.querySelectorAll(
+                'input[type="checkbox"]',
+              );
+            const deselectedClasses = Array.from(allClassCheckboxes)
+              .filter((cb) => !cb.checked)
+              .map((cb) => cb.value);
+
+            for (const classroomName of deselectedClasses) {
+              const classroomDoc = classroomsSnap.docs.find(
+                (doc) =>
+                  doc.data().classroomName === classroomName &&
+                  doc.data().teacherId === finalTeacherId,
+              );
+
+              if (classroomDoc) {
+                classroomUpdates.push(
+                  updateDoc(doc(db, "classrooms", classroomDoc.id), {
+                    teacherId: "",
+                    status: "pending",
+                  }),
+                );
+              }
+            }
+          }
+
+          if (classroomUpdates.length > 0) {
+            await Promise.all(classroomUpdates);
+          }
+
+          closeTeacherModal();
+          await renderTeacherTable();
+          hideLoading();
+        } catch (err) {
+          console.error("Error saving teacher:", err);
+          hideLoading();
+          // Handle specific authentication errors
+          if (err.code === "auth/email-already-in-use") {
+            alert("This email is already registered in the system.");
+          } else if (err.code === "auth/invalid-email") {
+            alert("Please enter a valid email address.");
+          } else if (err.code === "auth/weak-password") {
+            alert("The password is too weak.");
+          } else {
+            alert("Failed to save teacher. Please try again.");
+          }
         }
       }
-    }
-
-    if (classroomUpdates.length > 0) {
-      await Promise.all(classroomUpdates);
-    }
-
-    closeTeacherModal();
-    await renderTeacherTable();
-    hideLoading();
-  } catch (err) {
-    console.error("Error saving teacher:", err);
-    hideLoading();
-    // Handle specific authentication errors
-    if (err.code === "auth/email-already-in-use") {
-      alert("This email is already registered in the system.");
-    } else if (err.code === "auth/invalid-email") {
-      alert("Please enter a valid email address.");
-    } else if (err.code === "auth/weak-password") {
-      alert("The password is too weak.");
-    } else {
-      alert("Failed to save teacher. Please try again.");
-    }
-  }
-}
-
 
       function openDeleteConfirmationModal(teacherId, teacherName) {
         console.log(
@@ -1276,93 +1282,113 @@ populateClassesMultiselect(classesTaughtMultiselect, teacherData.classes);
       }
       // Update the deleteTeacher function to actually delete from Firestore
       async function deleteTeacher(teacherId) {
-  try {
-    showLoading();
-    
-    // Get teacher data first to get the UID
-    const teacherDoc = await getDoc(doc(db, "users", teacherId));
-    if (!teacherDoc.exists()) {
-      throw new Error("Teacher not found");
-    }
-    
-    const teacherData = teacherDoc.data();
-    const teacherUid = teacherData.uid;
-    const teacherName = teacherData.fullName || `${teacherData.firstName} ${teacherData.lastName}`;
-    
-    console.log(`🗑️ Deleting teacher: ${teacherName} (UID: ${teacherUid})`);
+        try {
+          showLoading();
 
-    // First, unassign this teacher from all classrooms
-    const classroomsQuery = query(
-      collection(db, "classrooms"),
-      where("teacherId", "==", teacherId),
-    );
-    const classroomsSnap = await getDocs(classroomsQuery);
+          // Get teacher data first to get the UID
+          const teacherDoc = await getDoc(doc(db, "users", teacherId));
+          if (!teacherDoc.exists()) {
+            throw new Error("Teacher not found");
+          }
 
-    const unassignPromises = [];
-    classroomsSnap.forEach((classroomDoc) => {
-      unassignPromises.push(
-        updateDoc(doc(db, "classrooms", classroomDoc.id), {
-          teacherId: "",
-          status: "pending",
-        }),
-      );
-    });
+          const teacherData = teacherDoc.data();
+          const teacherUid = teacherData.uid;
+          const teacherName =
+            teacherData.fullName ||
+            `${teacherData.firstName} ${teacherData.lastName}`;
 
-    if (unassignPromises.length > 0) {
-      await Promise.all(unassignPromises);
-      console.log(`✅ Unassigned teacher from ${unassignPromises.length} classrooms`);
-    }
+          console.log(
+            `🗑️ Deleting teacher: ${teacherName} (UID: ${teacherUid})`,
+          );
 
-    // Delete teacher from Firestore
-    await deleteDoc(doc(db, "users", teacherId));
-    console.log("✅ Teacher deleted from Firestore");
+          // First, unassign this teacher from all classrooms
+          const classroomsQuery = query(
+            collection(db, "classrooms"),
+            where("teacherId", "==", teacherId),
+          );
+          const classroomsSnap = await getDocs(classroomsQuery);
 
-    // Delete teacher from Firebase Authentication
-    if (teacherUid) {
-      try {
-        // Get the current user
-        const currentUser = auth.currentUser;
-        
-        if (currentUser && currentUser.uid === teacherUid) {
-          // If admin is deleting their own account (unlikely but handle it)
-          console.warn("Admin is deleting their own account - this might cause issues");
-          await deleteUser(currentUser);
-        } else {
-          // For security reasons, we need to re-authenticate as the teacher to delete their account
-          // This is a limitation of client-side Firebase Auth
-          console.warn("Cannot delete other users from client-side due to Firebase Auth security restrictions");
-          console.log("📝 Teacher removed from Firestore but account remains in Firebase Auth");
-          console.log("💡 Consider implementing a Cloud Function for complete account deletion");
+          const unassignPromises = [];
+          classroomsSnap.forEach((classroomDoc) => {
+            unassignPromises.push(
+              updateDoc(doc(db, "classrooms", classroomDoc.id), {
+                teacherId: "",
+                status: "pending",
+              }),
+            );
+          });
+
+          if (unassignPromises.length > 0) {
+            await Promise.all(unassignPromises);
+            console.log(
+              `✅ Unassigned teacher from ${unassignPromises.length} classrooms`,
+            );
+          }
+
+          // Delete teacher from Firestore
+          await deleteDoc(doc(db, "users", teacherId));
+          console.log("✅ Teacher deleted from Firestore");
+
+          // Delete teacher from Firebase Authentication
+          if (teacherUid) {
+            try {
+              // Get the current user
+              const currentUser = auth.currentUser;
+
+              if (currentUser && currentUser.uid === teacherUid) {
+                // If admin is deleting their own account (unlikely but handle it)
+                console.warn(
+                  "Admin is deleting their own account - this might cause issues",
+                );
+                await deleteUser(currentUser);
+              } else {
+                // For security reasons, we need to re-authenticate as the teacher to delete their account
+                // This is a limitation of client-side Firebase Auth
+                console.warn(
+                  "Cannot delete other users from client-side due to Firebase Auth security restrictions",
+                );
+                console.log(
+                  "📝 Teacher removed from Firestore but account remains in Firebase Auth",
+                );
+                console.log(
+                  "💡 Consider implementing a Cloud Function for complete account deletion",
+                );
+              }
+            } catch (authError) {
+              console.error("Error deleting from Firebase Auth:", authError);
+              if (authError.code === "auth/requires-recent-login") {
+                console.log(
+                  "🔒 Recent login required - teacher removed from Firestore only",
+                );
+              }
+              // Continue with the process even if Auth deletion fails
+            }
+          }
+
+          alert(
+            `Teacher "${teacherName}" has been permanently deleted from the system.`,
+          );
+
+          // Reload the table and metrics
+          await renderTeacherTable();
+          await updateMetrics();
+
+          hideLoading();
+        } catch (err) {
+          console.error("Error deleting teacher:", err);
+
+          if (err.code === "auth/requires-recent-login") {
+            alert(
+              "For security reasons, please log out and log back in to delete user accounts completely, or use the admin panel. The teacher has been removed from the system but their authentication account remains.",
+            );
+          } else {
+            alert("Failed to delete teacher. Please try again.");
+          }
+
+          hideLoading();
         }
-      } catch (authError) {
-        console.error("Error deleting from Firebase Auth:", authError);
-        if (authError.code === 'auth/requires-recent-login') {
-          console.log("🔒 Recent login required - teacher removed from Firestore only");
-        }
-        // Continue with the process even if Auth deletion fails
+        closeDeleteConfirmationModal();
       }
-    }
-
-    alert(`Teacher "${teacherName}" has been permanently deleted from the system.`);
-    
-    // Reload the table and metrics
-    await renderTeacherTable();
-    await updateMetrics();
-    
-    hideLoading();
-  } catch (err) {
-    console.error("Error deleting teacher:", err);
-    
-    if (err.code === 'auth/requires-recent-login') {
-      alert("For security reasons, please log out and log back in to delete user accounts completely, or use the admin panel. The teacher has been removed from the system but their authentication account remains.");
-    } else {
-      alert("Failed to delete teacher. Please try again.");
-    }
-    
-    hideLoading();
-  }
-  closeDeleteConfirmationModal();
-}
 
       // Update the modal to reflect that deletion is permanent
       // Change the delete confirmation modal text to be more specific
