@@ -313,64 +313,58 @@
 
       // --- Firebase Data Functions ---
 
-      // Function to load and display teacher profile data
-      async function loadTeacherProfile(uid) {
-        const userRef = db.collection("users").doc(uid);
-        let data;
+     // Function to load and display teacher profile data
+async function loadTeacherProfile(uid) {
+  const userRef = db.collection("users").doc(uid);
+  let data;
 
-        try {
-          const doc = await userRef.get();
+  try {
+    const doc = await userRef.get();
 
-          if (doc.exists) {
-            data = doc.data();
-          } else {
-            // Create a placeholder profile if the teacher doesn't exist yet
-            const placeholderData = {
-              firstName: "Your",
-              lastName: "Name",
-              name: "Your Name",
-              photoURL: "../../main/img/teacher.png", // ✅ default teacher photo
-              role: "Teacher",
-              school: "Sunhill Montessori",
-            };
-            await userRef.set(placeholderData);
-            data = placeholderData;
-          }
+    if (doc.exists) {
+      data = doc.data();
+    } else {
+      // Create a placeholder profile if the teacher doesn't exist yet
+      const placeholderData = {
+        firstName: "Your",
+        lastName: "Name",
+        name: "Your Name",
+        photoURL: "../../main/img/teacher.png", // ✅ default teacher photo
+        role: "Teacher",
+        school: "Sunhill Montessori",
+      };
+      await userRef.set(placeholderData);
+      data = placeholderData;
+    }
 
-          // ✅ Build full name (firstName + lastName)
-          const firstName = data.firstName || "";
-          const lastName = data.lastName || "";
-          const teacherName =
-            (firstName + " " + lastName).trim() || "Your Name";
+    // ✅ Build full name (firstName + lastName)
+    const firstName = data.firstName || "";
+    const lastName = data.lastName || "";
+    const teacherName = (firstName + " " + lastName).trim() || "Your Name";
 
-          const teacherRole = data.role || "Teacher";
-          const schoolName = data.school || "Sunhill Montessori";
-          const photoURL = data.photoURL || "../../main/img/teacher.png"; // ✅ fallback
+    const schoolName = data.school || "Sunhill Montessori";
+    const photoURL = data.photoURL || "../../main/img/teacher.png"; // ✅ fallback
 
-          // ✅ Update UI
-          teacherNameHeader.textContent = `${teacherName}'s Classes`;
-          teacherNameProfile.textContent = teacherName;
-          teacherRoleProfile.textContent = teacherRole;
-          schoolNameProfile.textContent = schoolName;
-          teacherAvatar.src = photoURL;
+    // ✅ Update UI - REMOVED teacher role display
+    teacherNameHeader.textContent = `${teacherName}'s Classes`;
+    teacherNameProfile.textContent = teacherName;
+    schoolNameProfile.textContent = schoolName;
+    teacherAvatar.src = photoURL;
 
-          // Hide spinner and show the main content
-          if (loadingSpinner) {
-            loadingSpinner.style.display = "none";
-          }
-          if (mainContentWrapper) {
-            mainContentWrapper.style.display = "flex";
-          }
-        } catch (error) {
-          console.error("Error fetching user profile:", error);
-          alert(
-            "Failed to load profile data. Check console and security rules.",
-          );
-          if (loadingSpinner) loadingSpinner.style.display = "none";
-          if (mainContentWrapper) mainContentWrapper.style.display = "flex";
-        }
-      }
-
+    // Hide spinner and show the main content
+    if (loadingSpinner) {
+      loadingSpinner.style.display = "none";
+    }
+    if (mainContentWrapper) {
+      mainContentWrapper.style.display = "flex";
+    }
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    alert("Failed to load profile data. Check console and security rules.");
+    if (loadingSpinner) loadingSpinner.style.display = "none";
+    if (mainContentWrapper) mainContentWrapper.style.display = "flex";
+  }
+}
       // --- Firebase Authentication & Initialization ---
 
       const currentUser = JSON.parse(localStorage.getItem("user"));
