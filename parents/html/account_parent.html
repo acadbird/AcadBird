@@ -125,6 +125,13 @@
         font-size: 12px;
         color: #666;
       }
+
+      /* Email field styling - make it read-only */
+      .email-readonly {
+        background-color: #f5f5f5;
+        color: #666;
+        cursor: not-allowed;
+      }
     </style>
   </head>
   <body>
@@ -181,7 +188,7 @@
         <nav class="nav-menu">
           <a href="homepage_parents.html" class="nav-item">Home</a>
           <a href="dashboard_parents.html" class="nav-item">Dashboard</a>
-          <a href="activitylog_parents.html" class="nav-item">Activity Logs</a>
+          <a href="activitylog_parents.html" class="nav-item">Announcements</a>
           <a href="resources_parents.html" class="nav-item">Resources</a>
           <a href="messages_parents.html" class="nav-item">Messages</a>
           <a href="account_parent.html" class="nav-item active">Settings</a>
@@ -230,6 +237,8 @@
                         type="email"
                         id="email"
                         value="sampleemail@school.edu.ph"
+                        readonly
+                        class="email-readonly"
                       />
                     </div>
                     <button class="text-button" id="change-password-btn">
@@ -305,7 +314,6 @@
         onAuthStateChanged,
         updateProfile,
         updatePassword,
-        verifyBeforeUpdateEmail, // Changed from updateEmail
       } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
       import {
         getFirestore,
@@ -371,8 +379,7 @@
       function checkFormChanges() {
         const hasChanges =
           firstNameInput.value !== originalValues.firstName ||
-          lastNameInput.value !== originalValues.lastName ||
-          emailInput.value !== originalValues.email;
+          lastNameInput.value !== originalValues.lastName;
 
         // Enable/disable save button based on changes
         if (saveChangesBtn) {
@@ -395,15 +402,9 @@
             lastNameInput.value !== originalValues.lastName,
           );
         }
-        if (emailInput) {
-          emailInput.classList.toggle(
-            "input-changed",
-            emailInput.value !== originalValues.email,
-          );
-        }
+        // Email field is read-only, no need for change indicator
       }
 
-      // Function to save changes to Firestore and Firebase Auth
       // Function to save changes to Firestore and Firebase Auth
       async function saveProfileChanges() {
         showLoading();
@@ -420,11 +421,10 @@
           const updatedData = {
             firstName: firstNameInput.value.trim(),
             lastName: lastNameInput.value.trim(),
-            email: emailInput.value.trim(),
             updatedAt: new Date(),
           };
 
-          // Update Firestore first
+          // Update Firestore
           const userDocRef = doc(db, "users", user.uid);
           await updateDoc(userDocRef, updatedData);
 
@@ -433,33 +433,15 @@
             displayName: `${updatedData.firstName} ${updatedData.lastName}`,
           });
 
-          // Update email in Firebase Auth if changed - USING VERIFICATION METHOD
-          if (updatedData.email !== originalValues.email) {
-            // Use verifyBeforeUpdateEmail instead of updateEmail
-            await verifyBeforeUpdateEmail(user, updatedData.email);
+          // Update original values
+          originalValues.firstName = updatedData.firstName;
+          originalValues.lastName = updatedData.lastName;
 
-            // Show message that verification email was sent
-            if (saveMessage) {
-              saveMessage.textContent =
-                "Verification email sent! Please check your new email to confirm the change.";
-              saveMessage.className = "save-message save-success";
-              saveMessage.style.display = "block";
-            }
-
-            // Don't update original values yet since email isn't verified
-            originalValues.firstName = updatedData.firstName;
-            originalValues.lastName = updatedData.lastName;
-            // Keep original email until verified
-          } else {
-            // No email change, update all original values
-            originalValues = { ...updatedData };
-
-            // Show success message
-            if (saveMessage) {
-              saveMessage.textContent = "Profile updated successfully!";
-              saveMessage.className = "save-message save-success";
-              saveMessage.style.display = "block";
-            }
+          // Show success message
+          if (saveMessage) {
+            saveMessage.textContent = "Profile updated successfully!";
+            saveMessage.className = "save-message save-success";
+            saveMessage.style.display = "block";
           }
 
           // Update UI
@@ -472,7 +454,7 @@
               : "O";
           }
 
-          // Hide message after 5 seconds (longer for verification message)
+          // Hide message after 5 seconds
           setTimeout(() => {
             if (saveMessage) {
               saveMessage.style.display = "none";
@@ -482,23 +464,7 @@
           console.error("Error updating profile:", error);
 
           // Show error message
-          let errorMessage = "Error updating profile: ";
-
-          switch (error.code) {
-            case "auth/requires-recent-login":
-              errorMessage +=
-                "This operation requires recent authentication. Please log out and log in again.";
-              break;
-            case "auth/email-already-in-use":
-              errorMessage +=
-                "This email is already in use by another account.";
-              break;
-            case "auth/invalid-email":
-              errorMessage += "The email address is invalid.";
-              break;
-            default:
-              errorMessage += error.message;
-          }
+          let errorMessage = "Error updating profile: " + error.message;
 
           if (saveMessage) {
             saveMessage.textContent = errorMessage;
@@ -509,11 +475,11 @@
           hideLoading();
         }
       }
+
       // Function to cancel changes and revert to original values
       function cancelChanges() {
         if (firstNameInput) firstNameInput.value = originalValues.firstName;
         if (lastNameInput) lastNameInput.value = originalValues.lastName;
-        if (emailInput) emailInput.value = originalValues.email;
         checkFormChanges();
       }
 
@@ -698,16 +664,14 @@
               // Initialize form change tracking
               checkFormChanges();
 
-              // Add event listeners for input changes
+              // Add event listeners for input changes (only for first and last name)
               if (firstNameInput) {
                 firstNameInput.addEventListener("input", checkFormChanges);
               }
               if (lastNameInput) {
                 lastNameInput.addEventListener("input", checkFormChanges);
               }
-              if (emailInput) {
-                emailInput.addEventListener("input", checkFormChanges);
-              }
+              // No event listener for email since it's read-only
             } else {
               console.log("User document not found!");
             }

@@ -123,6 +123,29 @@
   box-shadow: 0 2px 4px rgba(52, 152, 219, 0.3);
 }
 
+.notification-link {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+
 .edit-activity-btn:hover {
   background: linear-gradient(135deg, #d6a532, #d6a532);
   transform: translateY(-2px);

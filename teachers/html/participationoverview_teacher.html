@@ -35,19 +35,30 @@
           class="middle-logo"
         />
         <div class="nav-icons">
-          <img
-            src="../../main/img/Notification.png"
-            alt="Notifications"
-            class="icon"
-          />
-          <img src="../../main/img/Help.png" alt="Help" class="icon" />
-          <div class="account-menu">
+          <a
+            href="notification_teacher.html"
+            target="_blank"
+            class="notification-link"
+          >
             <img
-              src="../../main/img/account icon.png"
-              alt="User Account"
+              src="../../main/img/Notification.png"
+              alt="Notifications"
               class="icon"
             />
-          </div>
+            <span class="notification-badge" id="notification-badge">0</span>
+          </a>
+          <a href="help_teacher.html" target="_blank">
+            <img src="../../main/img/Help.png" alt="Help" class="icon" />
+          </a>
+          <a href="settings_teacher.html" target="_blank">
+            <div class="account-menu">
+              <img
+                src="../../main/img/account icon.png"
+                alt="User Account"
+                class="icon"
+              />
+            </div>
+          </a>
         </div>
       </div>
       <div class="secondary-header">
@@ -399,38 +410,13 @@
           populateStudentTables(quickLogTableBody);
 
           initializeEditDeleteListeners();
+          await updateNotificationBadge();
         } catch (err) {
           console.error("Error loading data:", err);
         } finally {
           hideLoading();
         }
       });
-
-      async function fetchStudentsFromFirestore() {
-        try {
-          const classroomID = localStorage.getItem("selectedClassId");
-          if (!classroomID) return;
-
-          const snapshot = await getDocs(
-            query(
-              collection(db, "students"),
-              where("classroomId", "==", classroomID),
-            ),
-          );
-
-          STUDENTS = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              fullName: `${data.firstName} ${data.lastName}`,
-            };
-          });
-
-          STUDENTS.sort((a, b) => a.fullName.localeCompare(b.fullName));
-        } catch (err) {
-          console.error("Error fetching students:", err);
-        }
-      }
 
       let weeksData = [];
 
@@ -735,6 +721,34 @@
         renderActivityCards();
       };
 
+      async function fetchStudentsFromFirestore() {
+        try {
+          const classroomID = localStorage.getItem("selectedClassId");
+          if (!classroomID) return;
+
+          const snapshot = await getDocs(
+            query(
+              collection(db, "students"),
+              where("classroomId", "==", classroomID),
+              where("status", "==", "active"), // ADD THIS FILTER
+            ),
+          );
+
+          STUDENTS = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              fullName: `${data.firstName} ${data.lastName}`,
+            };
+          });
+
+          STUDENTS.sort((a, b) => a.fullName.localeCompare(b.fullName));
+        } catch (err) {
+          console.error("Error fetching students:", err);
+        }
+      }
+
+      // Also update the populateStudentTables function to ensure it only uses active students
       const populateStudentTables = (tableBody, initialParticipants = {}) => {
         tableBody.innerHTML = "";
         STUDENTS.forEach((student) => {
@@ -748,12 +762,12 @@
           row.dataset.studentId = student.id;
 
           row.innerHTML = `
-            <td>${student.fullName}</td>
-            <td><input type="radio" name="student-${nameSlug}" value="full" ${level === "full" ? "checked" : ""}></td>
-            <td><input type="radio" name="student-${nameSlug}" value="partial" ${level === "partial" ? "checked" : ""}></td>
-            <td><input type="radio" name="student-${nameSlug}" value="none" ${level === "none" ? "checked" : ""}></td>
-            <td><input type="text" class="note-input" placeholder="Add note" value="${note}"></td>
-          `;
+      <td>${student.fullName}</td>
+      <td><input type="radio" name="student-${nameSlug}" value="full" ${level === "full" ? "checked" : ""}></td>
+      <td><input type="radio" name="student-${nameSlug}" value="partial" ${level === "partial" ? "checked" : ""}></td>
+      <td><input type="radio" name="student-${nameSlug}" value="none" ${level === "none" ? "checked" : ""}></td>
+      <td><input type="text" class="note-input" placeholder="Add note" value="${note}"></td>
+    `;
 
           tableBody.appendChild(row);
         });
@@ -1046,7 +1060,104 @@
         document.getElementById("editActivityModal").classList.add("hidden");
         currentEditingActivity = null;
       }
+      // Add this function to count unread notifications
+      async function updateNotificationBadge() {
+        try {
+          const currentUser = auth.currentUser;
 
+          if (!currentUser) {
+            console.log("❌ No current user found");
+            return;
+          }
+
+          console.log(
+            "🔄 Updating notification badge for user:",
+            currentUser.uid,
+          );
+
+          // Get teacher's classrooms
+          const classroomsQuery = query(
+            collection(db, "classrooms"),
+            where("teacherId", "==", currentUser.uid),
+          );
+          const classroomsSnapshot = await getDocs(classroomsQuery);
+          const teacherClassroomIds = [];
+          classroomsSnapshot.forEach((doc) => {
+            teacherClassroomIds.push(doc.id);
+          });
+
+          // Get all calendar events
+          const calendarSnapshot = await getDocs(collection(db, "calendar"));
+
+          // Get all students with status "active" in teacher's classrooms
+          let studentsSnapshot;
+          if (teacherClassroomIds.length > 0) {
+            const studentsQuery = query(
+              collection(db, "students"),
+              where("status", "==", "active"),
+              where("classroomId", "in", teacherClassroomIds),
+            );
+            studentsSnapshot = await getDocs(studentsQuery);
+          } else {
+            studentsSnapshot = { docs: [] };
+          }
+
+          // Get all read notifications
+          const readQuery = query(
+            collection(db, "notification_teacher"),
+            where("teacherID", "==", currentUser.uid),
+            where("status", "==", "read"),
+          );
+          const readSnapshot = await getDocs(readQuery);
+
+          const readNotifications = {};
+          readSnapshot.forEach((doc) => {
+            const data = doc.data();
+            const key = `${data.type}_${data.notificationID}`;
+            readNotifications[key] = true;
+          });
+
+          // Count unread calendar notifications - ONLY CURRENT AND FUTURE EVENTS
+          const currentDate = new Date();
+          currentDate.setHours(0, 0, 0, 0);
+
+          let unreadCount = 0;
+          calendarSnapshot.forEach((doc) => {
+            const eventData = doc.data();
+            const eventDate = new Date(eventData.date);
+            eventDate.setHours(0, 0, 0, 0);
+
+            // Only count if event is today or in the future
+            if (eventDate >= currentDate) {
+              const key = `calendar_${doc.id}`;
+              if (!readNotifications[key]) {
+                unreadCount++;
+              }
+            }
+          });
+
+          // Count unread student join notifications
+          studentsSnapshot.forEach((doc) => {
+            const key = `student_${doc.id}`;
+            if (!readNotifications[key]) {
+              unreadCount++;
+            }
+          });
+
+          // Update badge
+          const badge = document.getElementById("notification-badge");
+          if (badge) {
+            badge.textContent = unreadCount;
+            if (unreadCount === 0) {
+              badge.style.display = "none";
+            } else {
+              badge.style.display = "flex";
+            }
+          }
+        } catch (error) {
+          console.error("❌ Error updating notification badge:", error);
+        }
+      }
       function applySelectAll(level, tableBody) {
         tableBody.querySelectorAll("tr").forEach((row) => {
           const studentName = row.querySelector("td:first-child").textContent;

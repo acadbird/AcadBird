@@ -152,20 +152,7 @@
           <div class="post-feed" id="post-feed"></div>
         </div>
 
-        <div class="right-section">
-          <div class="card event-card">
-            <h4 class="card-title">Upcoming Events</h4>
-            <ul id="event-list"></ul>
-          </div>
-          <div class="card reminders-card">
-            <h4 class="card-title">Reminders</h4>
-            <ul id="reminder-list"></ul>
-          </div>
-          <div class="card tasks-card">
-            <h4 class="card-title">Tasks</h4>
-            <ul id="task-list"></ul>
-          </div>
-        </div>
+        <!-- Right section removed -->
       </div>
     </div>
     <div id="loading-overlay">
@@ -266,35 +253,7 @@
         loadingOverlay.style.display = "none";
       }
 
-      const eventList = document.getElementById("event-list");
-      const reminderList = document.getElementById("reminder-list");
-      const taskList = document.getElementById("task-list");
-
-      function createRightSectionItem(title, date, type) {
-        const listItem = document.createElement("li");
-        let formattedDate = "";
-        if (date) {
-          const [year, month, day] = date.split("-");
-          formattedDate = `${month}/${day}/${year}`;
-        }
-        const displayTitle =
-          title.length > 25 ? title.substring(0, 22) + "..." : title;
-
-        switch (type) {
-          case "Event":
-            listItem.innerHTML = `<p class="event-item">${displayTitle}<br>${formattedDate || "Date N/A"}<br>Time N/A</p>`;
-            eventList.prepend(listItem);
-            break;
-          case "Reminder":
-            listItem.innerHTML = `<p class="reminder-item">${displayTitle}<br>When: ${formattedDate || "Date N/A"}</p>`;
-            reminderList.prepend(listItem);
-            break;
-          case "Task":
-            listItem.innerHTML = `<p class="task-item">${displayTitle}<br>When: ${formattedDate || "Date N/A"}</p>`;
-            taskList.prepend(listItem);
-            break;
-        }
-      }
+      // Removed: eventList, reminderList, taskList variables and createRightSectionItem function
 
       // Function to load likes for a post
       // Function to load likes for a post
@@ -414,7 +373,7 @@
         }
       }
 
-      // Updated loadPosts function to fetch teacher names for each post
+      // Updated loadPosts function - removed right section item creation
       async function loadPosts() {
         try {
           // get classroomId from URL or localStorage
@@ -480,17 +439,7 @@
             postFeed.appendChild(postElement);
             addPostInteractionListeners(postElement);
 
-            if (
-              data.type === "Event" ||
-              data.type === "Reminder" ||
-              data.type === "Task"
-            ) {
-              createRightSectionItem(
-                data.task || data.type,
-                data.date || "",
-                data.type,
-              );
-            }
+            // Removed: Right section item creation
           }
         } catch (error) {
           console.error("Error loading posts:", error);
@@ -1048,9 +997,8 @@ ${fileHtml}
         const filePreviewContainer = document.getElementById(
           "file-preview-container",
         );
-        const eventList = document.getElementById("event-list");
-        const reminderList = document.getElementById("reminder-list");
-        const taskList = document.getElementById("task-list");
+
+        // Removed: eventList, reminderList, taskList variables
 
         // Modal elements
         const shareCodeBtn = document.querySelector(".share-code-btn");
@@ -1220,13 +1168,7 @@ ${fileHtml}
               postFeed.prepend(newPost);
               addPostInteractionListeners(newPost);
 
-              if (
-                postType === "Event" ||
-                postType === "Reminder" ||
-                postType === "Task"
-              ) {
-                createRightSectionItem(title, date, postType);
-              }
+              // Removed: Right section item creation
 
               resetPostCard();
             } catch (error) {

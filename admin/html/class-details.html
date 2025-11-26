@@ -53,7 +53,41 @@
         z-index: 1000;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
+      .student-card {
+        background-color: #ffc107; /* class-card color */
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        border: 2px solid #000;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        cursor: pointer;
+        transition:
+          transform 0.1s,
+          box-shadow 0.1s,
+          background-color 0.1s;
+        position: relative;
+      }
 
+      .student-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        background-color: #ffca28; /* Slightly lighter yellow on hover */
+      }
+
+      .student-card:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Add a subtle indicator that it's clickable */
+      .student-card::after {
+        content: "👨‍👩‍👧‍👦";
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        font-size: 12px;
+        opacity: 0.7;
+      }
       #parentDropdown div {
         transition: background-color 0.2s;
       }
@@ -163,6 +197,17 @@
         font-weight: 500;
       }
 
+      #notificationBadge {
+        font-size: 0.7rem;
+        font-weight: bold;
+        min-width: 1.25rem;
+        height: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #0a3b82; /* Match navbar color */
+      }
+
       /* Modal Styles */
       /* Updated modal to use .modal and .modal-content classes consistently for both modals */
       .modal {
@@ -262,6 +307,7 @@
         .circle:nth-child(5) {
           background-color: #f94346;
         }
+        /* Notification badge styles */
 
         .circle::before {
           content: "";
@@ -337,9 +383,18 @@
             class="w-[90px] h-[40px]"
           />
           <div class="flex items-center gap-4">
-            <a href="notification_admin.html" title="Notifications"
-              ><i class="fas fa-bell text-xl"></i
-            ></a>
+            <a
+              href="notification_admin.html"
+              title="Notifications"
+              class="relative"
+            >
+              <i class="fas fa-bell text-xl"></i>
+              <span
+                id="notificationBadge"
+                class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden"
+                >0</span
+              >
+            </a>
             <a href="help_admin.html" title="Help"
               ><i class="fas fa-question-circle text-xl"></i
             ></a>
@@ -742,6 +797,7 @@
       }
 
       // Fetch students for this class
+      // Fetch students for this class - Updated to include parentId
       async function fetchStudents(classId) {
         try {
           const studentsQuery = query(
@@ -757,6 +813,7 @@
 
             let parentEmail = "Email not set";
             let parentName = "Parent name not set";
+            let parentId = data.parentId || null;
 
             if (data.parentId) {
               const parentDoc = await getDoc(doc(db, "users", data.parentId));
@@ -775,6 +832,7 @@
               name: data.fullName || `${data.firstName} ${data.lastName}`,
               parent: parentName,
               email: parentEmail,
+              parentId: parentId, // Add parentId to student object
             });
           }
 
@@ -784,7 +842,6 @@
           return [];
         }
       }
-
       // Fetch parents for searchable dropdown
       // Fetch parents for searchable dropdown
       // Fetch parents for searchable dropdown - IMPROVED VERSION
@@ -840,7 +897,47 @@
         return parts[0];
       }
 
-      // Function to update all dynamic data in the HTML
+      // Update the notification bell badge
+      function updateNotificationBellBadge(unreadCount) {
+        const badge = document.getElementById("notificationBadge");
+        if (badge) {
+          if (unreadCount > 0) {
+            badge.textContent =
+              unreadCount > 99 ? "99+" : unreadCount.toString();
+            badge.classList.remove("hidden");
+          } else {
+            badge.classList.add("hidden");
+          }
+        }
+      }
+
+      // Fetch unread notifications count for the badge
+      async function getUnreadNotificationsCount() {
+        try {
+          showLoading(); // Add this line
+          const notificationsSnapshot = await getDocs(
+            collection(db, "notification_admin"),
+          );
+          let unreadCount = 0;
+
+          notificationsSnapshot.forEach((doc) => {
+            const notification = doc.data();
+            if (notification.status === "unread") {
+              unreadCount++;
+            }
+          });
+
+          updateNotificationBellBadge(unreadCount);
+          hideLoading();
+          return unreadCount;
+        } catch (error) {
+          console.error("Error fetching notifications count:", error);
+          return 0;
+          hideLoading();
+        }
+      }
+
+      // Render Student Roster - Updated to include delete button
       function renderClassDetails(studentsList = classData.students) {
         // Add null check at the beginning of the function
         if (!classData) {
@@ -881,14 +978,37 @@
 
         studentsList.forEach((student) => {
           const card = document.createElement("div");
-          card.className = "student-card";
-          card.onclick = () => viewStudentProfile(student.id, student.name);
+          card.className = "student-card relative"; // Added relative for positioning
+
+          // Updated click handler to redirect to parent-info.html
+          card.onclick = (e) => {
+            // Prevent card click when delete button is clicked
+            if (!e.target.closest(".delete-student-btn")) {
+              if (student.parentId) {
+                // Redirect to parent-info.html with parent ID
+                window.location.href = `parent-info.html?id=${student.parentId}`;
+              } else {
+                alert("No parent information available for this student.");
+              }
+            }
+          };
 
           card.innerHTML = `
+      <button class="delete-student-btn absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 transition-colors" title="Delete Student">
+        <i class="fas fa-minus"></i>
+      </button>
       <h3 class="student-name">${student.name}</h3>
       <p class="parent-info">Parent: <span class="font-bold">${student.parent}</span></p>
       <p class="parent-info text-xs mt-1"><i class="fas fa-envelope mr-1"></i> ${student.email}</p>
     `;
+
+          // Add delete functionality
+          const deleteBtn = card.querySelector(".delete-student-btn");
+          deleteBtn.addEventListener("click", (e) => {
+            e.stopPropagation(); // Prevent card click event
+            deleteStudent(student.id, student.name);
+          });
+
           rosterGrid.appendChild(card);
         });
 
@@ -900,6 +1020,42 @@
         capacityCard.innerHTML = `<p class="text-sm font-semibold text-gray-500">${Math.max(0, remainingCapacity)} Seats Available</p>`;
         rosterGrid.appendChild(capacityCard);
       }
+
+      // Delete student function
+      async function deleteStudent(studentId, studentName) {
+        if (
+          confirm(
+            `Are you sure you want to delete ${studentName}? This action cannot be undone.`,
+          )
+        ) {
+          try {
+            showLoading();
+
+            // Delete student from Firestore
+            await deleteDoc(doc(db, "students", studentId));
+
+            // Update local data
+            classData.students = classData.students.filter(
+              (student) => student.id !== studentId,
+            );
+
+            // Re-render the student roster
+            renderClassDetails();
+
+            hideLoading();
+            alert(
+              `${studentName} has been successfully deleted from the class.`,
+            );
+          } catch (error) {
+            hideLoading();
+            console.error("Error deleting student:", error);
+            alert("Failed to delete student. Please try again.");
+          }
+        }
+      }
+
+      // Function to update all dynamic data in the HTML
+      // Render Student Roster - Updated to redirect to parent-info.html
 
       // Filter/Sort Logic
       function handleSortChange(event) {
@@ -1118,6 +1274,8 @@
 
           // Set up event listeners
           setupEventListeners();
+
+          await getUnreadNotificationsCount();
 
           hideLoading();
         } catch (error) {

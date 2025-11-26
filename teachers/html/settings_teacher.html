@@ -460,17 +460,6 @@
         /**
          * Check if form values have changed from original values
          */
-        function hasFormChanged() {
-          const currentFirstName = firstNameInput.value.trim();
-          const currentLastName = lastNameInput.value.trim();
-          const currentEmail = emailInput.value.trim();
-
-          return (
-            currentFirstName !== originalFirstName ||
-            currentLastName !== originalLastName ||
-            currentEmail !== originalEmail
-          );
-        }
 
         /**
          * Update save and cancel buttons visibility and state
@@ -497,21 +486,21 @@
         /**
          * Reset form to original values
          */
-        function resetForm() {
-          firstNameInput.value = originalFirstName;
-          lastNameInput.value = originalLastName;
-          emailInput.value = originalEmail;
+        /**
+         * Check if form values have changed from original values
+         */
+        function hasFormChanged() {
+          const currentFirstName = firstNameInput.value.trim();
+          const currentLastName = lastNameInput.value.trim();
+          // Remove email comparison
+          // const currentEmail = emailInput.value.trim();
 
-          // Update avatar placeholder
-          if (originalFirstName) {
-            avatarPlaceholder.textContent = originalFirstName
-              .charAt(0)
-              .toUpperCase();
-          } else {
-            avatarPlaceholder.textContent = "A";
-          }
-
-          updateSaveCancelButtons(false);
+          return (
+            currentFirstName !== originalFirstName ||
+            currentLastName !== originalLastName
+            // Remove email comparison
+            // currentEmail !== originalEmail
+          );
         }
 
         /**
@@ -533,21 +522,23 @@
 
           const newFirstName = firstNameInput.value.trim();
           const newLastName = lastNameInput.value.trim();
-          const newEmail = emailInput.value.trim();
+          // Remove email variable
+          // const newEmail = emailInput.value.trim();
 
-          // Basic validation
-          if (!newFirstName || !newLastName || !newEmail) {
+          // Basic validation - remove email validation
+          if (!newFirstName || !newLastName) {
             alert("Please fill in all fields.");
             return;
           }
 
-          if (!newEmail.includes("@")) {
-            alert("Please enter a valid email address.");
-            return;
-          }
+          // Remove email validation
+          // if (!newEmail.includes("@")) {
+          //   alert("Please enter a valid email address.");
+          //   return;
+          // }
 
           try {
-            // Update Firestore using modular API
+            // Update Firestore using modular API - only update first and last name
             await window.firebaseModules.updateDoc(
               window.firebaseModules.doc(db, "users", user.uid),
               {
@@ -557,16 +548,17 @@
               },
             );
 
-            // Update email in Firebase Auth if changed
-            if (newEmail !== originalEmail) {
-              await user.updateEmail(newEmail);
-              console.log("Email updated in Firebase Auth");
-            }
+            // Remove email update logic
+            // // Update email in Firebase Auth if changed
+            // if (newEmail !== originalEmail) {
+            //   await user.updateEmail(newEmail);
+            //   console.log("Email updated in Firebase Auth");
+            // }
 
-            // Update original values
+            // Update original values - remove email
             originalFirstName = newFirstName;
             originalLastName = newLastName;
-            originalEmail = newEmail;
+            // originalEmail = newEmail;
 
             // Update avatar placeholder
             avatarPlaceholder.textContent = newFirstName
@@ -582,16 +574,33 @@
             console.log("Profile data saved to Firestore successfully.");
           } catch (error) {
             console.error("Error saving profile data:", error);
-
-            if (error.code === "auth/requires-recent-login") {
-              alert(
-                "For security reasons, please log in again to change your email.",
-              );
-            } else {
-              alert("Failed to save changes: " + error.message);
-            }
+            alert("Failed to save changes: " + error.message);
           }
         }
+
+        /**
+         * Reset form to original values
+         */
+        function resetForm() {
+          firstNameInput.value = originalFirstName;
+          lastNameInput.value = originalLastName;
+          // Remove email reset
+          // emailInput.value = originalEmail;
+
+          // Update avatar placeholder
+          if (originalFirstName) {
+            avatarPlaceholder.textContent = originalFirstName
+              .charAt(0)
+              .toUpperCase();
+          } else {
+            avatarPlaceholder.textContent = "A";
+          }
+
+          updateSaveCancelButtons(false);
+        }
+        /**
+         * Save profile changes to Firestore
+         */
 
         // Notification badge functionality - UPDATED for modular SDK
         async function updateNotificationBadge() {
@@ -817,11 +826,6 @@
             updateSaveCancelButtons(hasFormChanged());
           });
         }
-        if (emailInput) {
-          emailInput.addEventListener("input", function () {
-            updateSaveCancelButtons(hasFormChanged());
-          });
-        }
 
         // 8. Logout Button Event Listeners (RE-ADDED)
         if (dropdownLogoutLink) {
@@ -849,6 +853,10 @@
               // 1. Set email field from Firebase Auth object
               emailInput.value = user.email;
               originalEmail = user.email;
+
+              // ADD THIS LINE HERE - Make email field read-only
+              emailInput.readOnly = true;
+              emailInput.classList.add("email-readonly");
 
               // 2. Fetch and load additional profile data from Firestore
               await loadUserProfile(user.uid);
