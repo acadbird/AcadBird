@@ -331,7 +331,7 @@
               name: "Your Name",
               photoURL: "../../main/img/teacher.png", // ✅ default teacher photo
               role: "Teacher",
-              school: "Your School",
+              school: "Sunhill Montessori",
             };
             await userRef.set(placeholderData);
             data = placeholderData;
@@ -344,7 +344,7 @@
             (firstName + " " + lastName).trim() || "Your Name";
 
           const teacherRole = data.role || "Teacher";
-          const schoolName = data.school || "Your School";
+          const schoolName = data.school || "Sunhill Montessori";
           const photoURL = data.photoURL || "../../main/img/teacher.png"; // ✅ fallback
 
           // ✅ Update UI
